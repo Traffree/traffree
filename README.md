@@ -2,4 +2,4 @@
 
 ## Installation
 
-[sumo](https://sumo.dlr.de/docs/Installing/index.html).
+[sumo](https://sumo.dlr.de/docs/Installing/index.html)
