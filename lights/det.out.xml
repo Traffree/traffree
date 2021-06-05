@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2021-06-05 10:37:09 by Eclipse SUMO GUI Version 1.9.2
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
+
+    <input>
+        <net-file value="lights.net.xml"/>
+        <route-files value="lights.rou.xml"/>
+        <additional-files value="lights.add.xml"/>
+    </input>
+
+    <output>
+        <tripinfo-output value="tripinfo.xml"/>
+    </output>
+
+    <traci_server>
+        <remote-port value="59365"/>
+    </traci_server>
+
+</configuration>
+-->
+
+<detector xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/det_e2_file.xsd">
+   <interval begin="0.00" end="265.00" id="det_WR" sampledSeconds="941.50" nVehEntered="5" nVehLeft="5" nVehSeen="5" meanSpeed="1.02" meanTimeLoss="169.03" meanOccupancy="9.17" maxOccupancy="12.97" meanMaxJamLengthInVehicles="2.99" meanMaxJamLengthInMeters="20.49" maxJamLengthInVehicles="5" maxJamLengthInMeters="35.16" jamLengthInVehiclesSum="792" jamLengthInMetersSum="5428.66" meanHaltingDuration="100.00" maxHaltingDuration="201.00" haltingDurationSum="800.00" meanIntervalHaltingDuration="100.00" maxIntervalHaltingDuration="201.00" intervalHaltingDurationSum="800.00" startedHalts="8.00" meanVehicleNumber="3.57" maxVehicleNumber="5" />
+   <interval begin="0.00" end="265.00" id="det_SR" sampledSeconds="104.09" nVehEntered="4" nVehLeft="4" nVehSeen="4" meanSpeed="7.41" meanTimeLoss="6.75" meanOccupancy="0.98" maxOccupancy="10.37" meanMaxJamLengthInVehicles="0.00" meanMaxJamLengthInMeters="0.00" maxJamLengthInVehicles="0" maxJamLengthInMeters="0.00" jamLengthInVehiclesSum="0" jamLengthInMetersSum="0.00" meanHaltingDuration="1.00" maxHaltingDuration="1.00" haltingDurationSum="3.00" meanIntervalHaltingDuration="1.00" maxIntervalHaltingDuration="1.00" intervalHaltingDurationSum="3.00" startedHalts="3.00" meanVehicleNumber="0.40" maxVehicleNumber="4" />
+</detector>
