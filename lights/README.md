@@ -1,4 +1,4 @@
-# Simple rerouting demo
+# Simple traffic light demo
 
 ## Description
 
