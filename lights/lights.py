@@ -4,6 +4,11 @@ import os
 import sys
 import optparse
 
+current_dir = os.path.dirname(os.path.realpath(__file__))
+parent_dir = os.path.dirname(current_dir)
+sys.path.append(parent_dir)
+from scheduler_interface.scheduler import Scheduler, Info
+
 # we need to import some python modules from the $SUMO_HOME/tools directory
 if 'SUMO_HOME' in os.environ:
     tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
@@ -24,31 +29,6 @@ def get_options():
     return options
 
 
-# # run with induction loop
-# def run():
-#     step = 0
-#     passed_cars_sofar = 0
-#     # start with phase 2 where SN has green
-#     traci.trafficlight.setPhase("Ctl", 0)
-#     while traci.simulation.getMinExpectedNumber() > 0:
-#         traci.simulationStep()
-#         if traci.trafficlight.getPhase("Ctl") == 0:
-#             # we are not already switching
-#             passed_cars_sofar += traci.inductionloop.getLastStepVehicleNumber("det_WR")
-#             print(passed_cars_sofar)
-#             if passed_cars_sofar > 4:
-#                 # vehicle from the nwest, switch
-#                 traci.trafficlight.setPhase("Ctl", 1)
-#             else:
-#                 # keep green for SN
-#                 traci.trafficlight.setPhase("Ctl", 0)
-
-#         step += 1
-
-#     traci.close()
-#     sys.stdout.flush()
-
-
 # run with lane area detector
 def run():
     step = 0
@@ -56,16 +36,15 @@ def run():
     traci.trafficlight.setPhase("Ctl", 0)
     while traci.simulation.getMinExpectedNumber() > 0:
         traci.simulationStep()
-        if traci.trafficlight.getPhase("Ctl") == 0:
-            # we are not already switching
-            jam_cars = traci.lanearea.getJamLengthVehicle("det_WR")
-            # print(jam_cars)
-            if jam_cars > 4:
-                # vehicle from the nwest, switch
-                traci.trafficlight.setPhase("Ctl", 1)
-            else:
-                # keep green for SN
-                traci.trafficlight.setPhase("Ctl", 0)
+
+        if step % 19 == 0:
+            north_count = traci.lanearea.getJamLengthVehicle("det_NR")
+            east_count = traci.lanearea.getJamLengthVehicle("det_ER")
+            south_count = traci.lanearea.getJamLengthVehicle("det_SR")
+            west_count = traci.lanearea.getJamLengthVehicle("det_WR")
+
+            prediction = Scheduler.predict(Info("Ctl", north_count, east_count, south_count, west_count))
+            traci.trafficlight.setPhase("Ctl", prediction)
 
         step += 1
 

@@ -1,8 +1,9 @@
 <additionals>
 
-    <laneAreaDetector id="det_WR" lane="WR_0" freq="500" file="det.out.xml" />
-    <laneAreaDetector id="det_SR" lane="SR_0" freq="500" file="det.out.xml" />
-
+    <laneAreaDetector id="det_NR" lane="NR_0" endPos="-1" length="120" speedThreshold="100" freq="500" file="det.out.xml" />
+    <laneAreaDetector id="det_ER" lane="ER_0" endPos="-1" length="120" speedThreshold="100" freq="500" file="det.out.xml" />
+    <laneAreaDetector id="det_SR" lane="SR_0" endPos="-1" length="120" speedThreshold="100" freq="500" file="det.out.xml" />
+    <laneAreaDetector id="det_WR" lane="WR_0" endPos="-1" length="120" speedThreshold="100" freq="500" file="det.out.xml" />
     <!-- <inductionLoop id="det_WR" lane="WR_0" pos="100" endPos="101" freq="500" file="det.out.xml"/>
     <inductionLoop id="det_SR" lane="SR_0" pos="100" endPos="101" freq="500" file="det.out.xml"/> -->
 
