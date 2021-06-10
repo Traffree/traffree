@@ -7,7 +7,10 @@ import optparse
 current_dir = os.path.dirname(os.path.realpath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
-from scheduler_interface.scheduler import Scheduler, Info
+
+from scheduler.info import Info
+from scheduler.basic_random_scheduler import BasicRandomScheduler
+from scheduler.scheduler_interface import SchedulerInterface
 
 # we need to import some python modules from the $SUMO_HOME/tools directory
 if 'SUMO_HOME' in os.environ:
@@ -43,7 +46,7 @@ def run():
             south_count = traci.lanearea.getJamLengthVehicle("det_SR")
             west_count = traci.lanearea.getJamLengthVehicle("det_WR")
 
-            prediction = Scheduler.predict(Info("Ctl", north_count, east_count, south_count, west_count))
+            prediction = BasicRandomScheduler.predict(Info("Ctl", north_count, east_count, south_count, west_count))
             traci.trafficlight.setPhase("Ctl", prediction)
 
         step += 1
