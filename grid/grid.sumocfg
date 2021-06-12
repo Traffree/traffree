@@ -1,0 +1,7 @@
+<configuration>
+    <input>
+        <net-file value="grid.net.xml"/>
+        <route-files value="grid.rou.xml"/>
+        <additional-files value="grid.add.xml"/>
+    </input>
+</configuration>
