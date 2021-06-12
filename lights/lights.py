@@ -47,7 +47,16 @@ def run():
             west_count = traci.lanearea.getJamLengthVehicle("det_WR")
 
             prediction = BasicRandomScheduler.predict(Info("Ctl", north_count, east_count, south_count, west_count))
-            traci.trafficlight.setPhase("Ctl", prediction)
+
+            # add yellow lights before switching
+            old_phase = traci.trafficlight.getPhase("Ctl")
+            if old_phase % 2:  # already yellow
+                traci.trafficlight.setPhase("Ctl", 2*prediction)
+            elif old_phase == 2*prediction:  # color remains unchanged
+                traci.trafficlight.setPhase("Ctl", 2*prediction)
+            else:  # assign yellow
+                yellow_phase = (2*prediction + 3) % 4
+                traci.trafficlight.setPhase("Ctl", yellow_phase)
 
         step += 1
 
