@@ -1,0 +1,5 @@
+<types>
+    <type id="two_lane" 
+        numLanes="2" 
+        speed="44.0" />
+</types>
