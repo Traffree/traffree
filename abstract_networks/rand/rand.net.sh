@@ -1,6 +1,6 @@
 netgenerate --rand \
 -j=traffic_light \
--t=edge.typ.xml \
+-t=../edge.typ.xml \
 --default.type="two_lane" \
 --no-turnarounds=true \
 --rand.iterations=200 \
