@@ -16,7 +16,7 @@ class BasicRandomSchedulerInfo(SchedulerInfoInterface):
 
 class BasicRandomScheduler(SchedulerInterface):
     @staticmethod
-    def predict(info: SchedulerInfoInterface):
+    def predict(info: BasicRandomSchedulerInfo):
         all_count = (info.west + info.east + info.north + info.south) + 0.01
         probability = (info.north + info.south + 0.005) / all_count
         return np.random.binomial(1, 1 - probability)
