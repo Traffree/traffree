@@ -8,8 +8,7 @@ current_dir = os.path.dirname(os.path.realpath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
 
-from scheduler.info import Info
-from scheduler.basic_random_scheduler import BasicRandomScheduler
+from scheduler.basic_random_scheduler import BasicRandomScheduler, BasicRandomSchedulerInfo
 from scheduler.scheduler_interface import SchedulerInterface
 
 # we need to import some python modules from the $SUMO_HOME/tools directory
@@ -53,7 +52,7 @@ def get_lane_stats(detectors):
         
         from_col, from_row, to_col, to_row = parts.group(1, 2, 3, 4)
         jam_length = traci.lanearea.getJamLengthVehicle(detector)
-        print(jam_length)
+
         if (from_col < to_col):
             west_count += jam_length
         elif (from_col > to_col):
@@ -90,8 +89,9 @@ def run():
                 # print(detectors)
 
                 north_count, east_count, south_count, west_count = get_lane_stats(detectors)
-                
-                prediction = BasicRandomScheduler.predict(Info(tl_id, north_count, east_count, south_count, west_count))
+
+                info = BasicRandomSchedulerInfo(tl_id, north_count, east_count, south_count, west_count)
+                prediction = BasicRandomScheduler.predict(info)
 
                 # add yellow lights before switching
                 old_phase = traci.trafficlight.getPhase(tl_id)
