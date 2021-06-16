@@ -99,16 +99,24 @@ def run():
                 info = BasicColorBasedSchedulerInfo(tl_id, red_stats, green_stats)
                 prediction = BasicColorBasedScheduler.predict(info)
 
-                # TODO: fix this
-                # add yellow lights before switching
                 old_phase = traci.trafficlight.getPhase(tl_id)
-                if old_phase % 2:  # already yellow
-                    traci.trafficlight.setPhase(tl_id, 2 * prediction)
-                elif old_phase == 2 * prediction:  # color remains unchanged
-                    traci.trafficlight.setPhase(tl_id, 2 * prediction)
-                else:  # assign yellow
-                    yellow_phase = (2 * prediction + 3) % 4
-                    traci.trafficlight.setPhase(tl_id, yellow_phase)
+                if prediction == 0:
+                    # maintain green
+                    traci.trafficlight.setPhase(old_phase)
+                else:
+                    # switch to next phase (which is yellow followed by red)
+                    new_phase = (old_phase + 1) % 4
+                    traci.trafficlight.setPhase(new_phase)
+
+                # # old code
+                # add yellow lights before switching
+                # if old_phase % 2:  # already yellow
+                #     traci.trafficlight.setPhase(tl_id, 2 * prediction)
+                # elif old_phase == 2 * prediction:  # color remains unchanged
+                #     traci.trafficlight.setPhase(tl_id, 2 * prediction)
+                # else:  # assign yellow
+                #     yellow_phase = (2 * prediction + 3) % 4
+                #     traci.trafficlight.setPhase(tl_id, yellow_phase)
 
         step += 1
 
