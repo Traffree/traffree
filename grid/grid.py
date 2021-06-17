@@ -3,8 +3,7 @@
 import optparse
 import os
 import sys
-
-from scheduler.basic_color_based_scheduler import BasicColorBasedScheduler, BasicColorBasedSchedulerInfo
+import re
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
 parent_dir = os.path.dirname(current_dir)
@@ -17,19 +16,20 @@ if 'SUMO_HOME' in os.environ:
 else:
     sys.exit("please declare environment variable 'SUMO_HOME'")
 
+from scheduler.basic_color_based_scheduler import BasicColorBasedScheduler, BasicColorBasedSchedulerInfo
+from scheduler.basic_random_scheduler import BasicRandomScheduler, BasicRandomSchedulerInfo
 from sumolib import checkBinary  # Checks for the binary in environ vars
 import traci
 
 
 def get_options():
     opt_parser = optparse.OptionParser()
-    opt_parser.add_option("--nogui", action="store_true",
-                          default=False, help="run the commandline version of sumo")
+    opt_parser.add_option("--nogui", action="store_true", default=False, help="run the commandline version of sumo")
     options, args = opt_parser.parse_args()
     return options, args
 
 
-def getLane2Detector(detector_ids):
+def get_lane_2_detector(detector_ids):
     lane2detector = {}
     for detector in detector_ids:
         lane = traci.lanearea.getLaneID(detector)
@@ -38,9 +38,6 @@ def getLane2Detector(detector_ids):
         lane2detector[lane] = detectors
 
     return lane2detector
-
-
-import re
 
 
 def get_lane_stats(detectors):
@@ -52,28 +49,20 @@ def get_lane_stats(detectors):
 
         from_col, from_row, to_col, to_row = parts.group(1, 2, 3, 4)
         jam_length = traci.lanearea.getJamLengthVehicle(detector)
-        print(jam_length)
-        if (from_col < to_col):
+        if from_col < to_col:
             west_count += jam_length
-        elif (from_col > to_col):
+        elif from_col > to_col:
             east_count += jam_length
-        elif (from_row > to_row):
+        elif from_row > to_row:
             north_count += jam_length
-        elif (from_row < to_row):
+        elif from_row < to_row:
             south_count += jam_length
 
     return north_count, east_count, south_count, west_count
 
 
-# run with lane area detector
-def run():
+def basic_color_based_scheduler_loop(tl_ids, lane2detector):
     step = 0
-    # start with phase 2 where SN has green
-
-    tl_ids = traci.trafficlight.getIDList()
-    detector_ids = traci.lanearea.getIDList()
-    lane2detector = getLane2Detector(detector_ids)
-
     while traci.simulation.getMinExpectedNumber() > 0:
         traci.simulationStep()
 
@@ -102,26 +91,12 @@ def run():
                 old_phase = traci.trafficlight.getPhase(tl_id)
                 if prediction == 0:
                     # maintain green
-                    traci.trafficlight.setPhase(old_phase)
+                    traci.trafficlight.setPhase(tl_id, old_phase)
                 else:
                     # switch to next phase (which is yellow followed by red)
                     new_phase = (old_phase + 1) % 4
-                    traci.trafficlight.setPhase(new_phase)
-
-                # # old code
-                # add yellow lights before switching
-                # if old_phase % 2:  # already yellow
-                #     traci.trafficlight.setPhase(tl_id, 2 * prediction)
-                # elif old_phase == 2 * prediction:  # color remains unchanged
-                #     traci.trafficlight.setPhase(tl_id, 2 * prediction)
-                # else:  # assign yellow
-                #     yellow_phase = (2 * prediction + 3) % 4
-                #     traci.trafficlight.setPhase(tl_id, yellow_phase)
-
+                    traci.trafficlight.setPhase(tl_id, new_phase)
         step += 1
-
-    traci.close()
-    sys.stdout.flush()
 
 
 # new helper
@@ -129,66 +104,66 @@ def get_colored_lane_stats(lane2detector, lanes):
     detectors = [lane2detector[lane] for lane in lanes]
     detectors = [t for item in detectors for t in item]
     jams = [traci.lanearea.getJamLengthVehicle(detector) for detector in detectors]
-    # print(jams)
     return sum(jams)
 
 
-# TODO: nothing to do, just remark: below is an old run method
-# # run with lane area detector
-# def run():
-#     step = 0
-#     # start with phase 2 where SN has green
+def basic_random_scheduler_loop(tl_ids, lane2detector):
+    step = 0
+    while traci.simulation.getMinExpectedNumber() > 0:
+        traci.simulationStep()
 
-#     tl_ids = traci.trafficlight.getIDList()
-#     detector_ids = traci.lanearea.getIDList()
-#     lane2detector = getLane2Detector(detector_ids)
+        if step % 19 == 0:
+            for tl_id in tl_ids:
+                lanes = set(traci.trafficlight.getControlledLanes(tl_id))
+                detectors = [lane2detector[lane] for lane in lanes]
+                detectors = [t for item in detectors for t in item]
 
-#     while traci.simulation.getMinExpectedNumber() > 0:
-#         traci.simulationStep()
+                north_count, east_count, south_count, west_count = get_lane_stats(detectors)
+                info = BasicRandomSchedulerInfo(tl_id, north_count, east_count, south_count, west_count)
+                prediction = BasicRandomScheduler.predict(info)
 
-#         if step % 19 == 0:
-#             for tl_id in tl_ids:
-#                 lanes = set(traci.trafficlight.getControlledLanes(tl_id))
-#                 # print(lanes)
-
-#                 # links = traci.trafficlight.getControlledLinks(tl)
-
-#                 detectors = [lane2detector[lane] for lane in lanes]
-#                 detectors = [t for item in detectors for t in item]
-#                 # print(detectors)
-
-#                 north_count, east_count, south_count, west_count = get_lane_stats(detectors)
-
-#                 info = BasicRandomSchedulerInfo(tl_id, north_count, east_count, south_count, west_count)
-#                 prediction = BasicRandomScheduler.predict(info)
-
-#                 # add yellow lights before switching
-#                 old_phase = traci.trafficlight.getPhase(tl_id)
-#                 if old_phase % 2:  # already yellow
-#                     traci.trafficlight.setPhase(tl_id, 2*prediction)
-#                 elif old_phase == 2*prediction:  # color remains unchanged
-#                     traci.trafficlight.setPhase(tl_id, 2*prediction)
-#                 else:  # assign yellow
-#                     yellow_phase = (2*prediction + 3) % 4
-#                     traci.trafficlight.setPhase(tl_id, yellow_phase)
-
-#         step += 1
-
-#     traci.close()
-#     sys.stdout.flush()
+                # add yellow lights before switching
+                old_phase = traci.trafficlight.getPhase(tl_id)
+                if old_phase % 2:  # already yellow
+                    traci.trafficlight.setPhase(tl_id, 2 * prediction)
+                elif old_phase == 2 * prediction:  # color remains unchanged
+                    traci.trafficlight.setPhase(tl_id, 2*prediction)
+                else:  # assign yellow
+                    yellow_phase = (2 * prediction + 3) % 4
+                    traci.trafficlight.setPhase(tl_id, yellow_phase)
+        step += 1
 
 
-# main entry point
-if __name__ == "__main__":
+def run(scheduler_type):
+    tl_ids = traci.trafficlight.getIDList()
+    detector_ids = traci.lanearea.getIDList()
+    lane2detector = get_lane_2_detector(detector_ids)
+
+    if scheduler_type == "BasicRandomScheduler":
+        basic_random_scheduler_loop(tl_ids, lane2detector)
+    elif scheduler_type == "BasicColorBasedScheduler":
+        basic_color_based_scheduler_loop(tl_ids, lane2detector)
+    else:
+        raise ValueError("There is no such scheduler type")
+
+    traci.close()
+    sys.stdout.flush()
+
+
+def main():
     options, args = get_options()
+    scheduler_type = args[0] if args else "BasicColorBasedScheduler"
 
     # check binary
     if options.nogui:
-        sumoBinary = checkBinary('sumo')
+        sumo_binary = checkBinary('sumo')
     else:
-        sumoBinary = checkBinary('sumo-gui')
+        sumo_binary = checkBinary('sumo-gui')
 
     # traci starts sumo as a subprocess and then this script connects and runs
-    traci.start([sumoBinary, "-c", "grid.sumocfg",
-                 "--tripinfo-output", "tripinfo.xml"])
-    run()
+    traci.start([sumo_binary, "-c", "grid.sumocfg", "--tripinfo-output", "tripinfo.xml"])
+    run(scheduler_type)
+
+
+if __name__ == "__main__":
+    main()
