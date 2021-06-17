@@ -20,6 +20,7 @@ from scheduler.basic_color_based_scheduler import BasicColorBasedScheduler, Basi
 from scheduler.basic_random_scheduler import BasicRandomScheduler, BasicRandomSchedulerInfo
 from sumolib import checkBinary  # Checks for the binary in environ vars
 import traci
+import sumolib
 
 
 def get_options():
@@ -134,6 +135,11 @@ def basic_random_scheduler_loop(tl_ids, lane2detector):
         step += 1
 
 
+def basic_sumo_loop():
+    while traci.simulation.getMinExpectedNumber() > 0:
+        traci.simulationStep()
+
+
 def run(scheduler_type):
     tl_ids = traci.trafficlight.getIDList()
     detector_ids = traci.lanearea.getIDList()
@@ -144,15 +150,54 @@ def run(scheduler_type):
     elif scheduler_type == "BasicColorBasedScheduler":
         basic_color_based_scheduler_loop(tl_ids, lane2detector)
     else:
-        raise ValueError("There is no such scheduler type")
+        basic_sumo_loop()
 
     traci.close()
     sys.stdout.flush()
 
+    print_statistics(scheduler_type)
+
+
+def print_statistics(scheduler_type):
+    waiting_time_array = []
+    waiting_count_array = []
+    stop_time_array = []
+    time_loss_array = []
+    for trip_info in sumolib.xml.parse('tripinfo.xml', ['tripinfo']):
+        waiting_time_array.append(float(trip_info.waitingTime))
+        waiting_count_array.append(float(trip_info.waitingCount))
+        stop_time_array.append(float(trip_info.stopTime))
+        time_loss_array.append(float(trip_info.timeLoss))
+
+    print("Scheduler Type: ", scheduler_type if scheduler_type is not None else "Default")
+    print("Waiting time statistics")
+    print("Max: ", max(waiting_time_array))
+    print("Min: ", min(waiting_time_array))
+    print("Avg: ", sum(waiting_time_array) / len(waiting_time_array))
+    # print("\n")
+
+    print("Waiting count statistics")
+    print("Max: ", max(waiting_count_array))
+    print("Min: ", min(waiting_count_array))
+    print("Avg: ", sum(waiting_count_array) / len(waiting_count_array))
+    # print("\n")
+
+    print("Stop time statistics")
+    print("Max: ", max(stop_time_array))
+    print("Min: ", min(stop_time_array))
+    print("Avg: ", sum(stop_time_array) / len(stop_time_array))
+    # print("\n")
+
+    print("Time loss statistics")
+    print("Max: ", max(time_loss_array))
+    print("Min: ", min(time_loss_array))
+    print("Avg: ", sum(time_loss_array) / len(time_loss_array))
+    print("\n")
+
 
 def main():
     options, args = get_options()
-    scheduler_type = args[0] if args else "BasicColorBasedScheduler"
+    scheduler_type = args[0] if args else None
 
     # check binary
     if options.nogui:

@@ -1,0 +1,14 @@
+<configuration> 
+
+<input> 
+    <net-file value="batumi.net.xml"/>
+    <route-files value="batumi.rou.xml"/>
+    <additional-files value="batumi.add.xml"/>
+</input> 
+
+<time> 
+    <begin value="0"/>
+    <end value="2000"/>
+</time> 
+
+</configuration>

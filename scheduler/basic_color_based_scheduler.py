@@ -20,4 +20,8 @@ class BasicColorBasedScheduler(SchedulerInterface):
         probability = info.green / all_count
 
         # 0 means maintain green, 1 means change to red
+        if probability > 0.8:
+            return 0
+        elif probability < 0.2:
+            return 1
         return np.random.binomial(1, 1-probability)

@@ -150,6 +150,7 @@ if __name__ == "__main__":
                 detector_xml.setAttribute("tl", tls.getID())
             else:
                 detector_xml.setAttribute("freq", str(options.frequency))
+            detector_xml.setAttribute("speedThreshold", "100")
             detector_xml.setAttribute("friendlyPos", "x")
             detector_xml.setAttribute("id", "e2det_" + str(lane_id))
             detector_xml.setAttribute("lane", str(lane_id))
