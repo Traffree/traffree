@@ -1,13 +1,7 @@
-#!/usr/bin/python3
-
 import optparse
 import os
 import sys
 import re
-
-current_dir = os.path.dirname(os.path.realpath(__file__))
-parent_dir = os.path.dirname(current_dir)
-sys.path.append(parent_dir)
 
 # we need to import some python modules from the $SUMO_HOME/tools directory
 if 'SUMO_HOME' in os.environ:
@@ -16,8 +10,9 @@ if 'SUMO_HOME' in os.environ:
 else:
     sys.exit("please declare environment variable 'SUMO_HOME'")
 
-from scheduler.basic_color_based_scheduler import BasicColorBasedScheduler, BasicColorBasedSchedulerInfo
 from scheduler.basic_random_scheduler import BasicRandomScheduler, BasicRandomSchedulerInfo
+from scheduler.basic_color_based_scheduler import BasicColorBasedScheduler, BasicColorBasedSchedulerInfo
+
 from sumolib import checkBinary  # Checks for the binary in environ vars
 import traci
 import sumolib
@@ -197,7 +192,8 @@ def print_statistics(scheduler_type):
 
 def main():
     options, args = get_options()
-    scheduler_type = args[0] if args else None
+    config_path = args[0]
+    scheduler_type = args[1] if len(args) > 1 else None
 
     # check binary
     if options.nogui:
@@ -206,7 +202,7 @@ def main():
         sumo_binary = checkBinary('sumo-gui')
 
     # traci starts sumo as a subprocess and then this script connects and runs
-    traci.start([sumo_binary, "-c", "grid.sumocfg", "--tripinfo-output", "tripinfo.xml"])
+    traci.start([sumo_binary, "-c", config_path, "--tripinfo-output", "tripinfo.xml"])
     run(scheduler_type)
 
 

@@ -1,4 +1,4 @@
-from scheduler.scheduler_interface import SchedulerInterface, SchedulerInfoInterface
+from .scheduler_interface import SchedulerInterface, SchedulerInfoInterface
 import numpy as np
 
 

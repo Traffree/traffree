@@ -1,7 +1,0 @@
-<configuration>
-    <input>
-        <net-file value="lights.net.xml"/>
-        <route-files value="lights.rou.xml"/>
-        <additional-files value="lights.add.xml"/>
-    </input>
-</configuration>

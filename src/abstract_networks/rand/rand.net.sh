@@ -3,6 +3,9 @@ netgenerate --rand \
 -t=../edge.typ.xml \
 --default.type="two_lane" \
 --no-turnarounds=true \
+--rand.max-distance=500 \
+--rand.min-distance=200 \
+--rand.min-angle=90 \
 --rand.iterations=200 \
 --rand.neighbor-dist1=1 \
 --rand.neighbor-dist2=5 \
