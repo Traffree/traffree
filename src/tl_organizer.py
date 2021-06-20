@@ -33,18 +33,12 @@ def get_new_logic(logic, max_dur='1000'):
                      '\t\t<phase duration="' + max_dur + '" state="rrGGrr"/>\n' \
                      '\t\t<phase duration="3"  state="rryyyr"/>\n'
     elif len(logic) == 3:
-        new_phases = '\t\t<phase duration="999" state="GG"/>\n' \
-                     '\t\t<phase duration="3"  state="yy"/>\n' \
-                     '\t\t<phase duration="999"  state="GG"/>\n' \
-                     '\t\t<phase duration="3"  state="yy"/>\n'
+        new_phases = ''.join(update_durations(logic, '999'))
     elif len(logic) == 4:
         first_phase = logic[0]
         first_phase_pattern = first_phase.split('"')[3]
         if first_phase_pattern == 'GG':
-            new_phases = '\t\t<phase duration="999" state="GG"/>\n' \
-                         '\t\t<phase duration="3"  state="yy"/>\n' \
-                         '\t\t<phase duration="999"  state="GG"/>\n' \
-                         '\t\t<phase duration="3"  state="yy"/>\n'
+            new_phases = ''.join(update_durations(logic, '999'))
         elif len(first_phase_pattern) == 6:
             new_phases = '\t\t<phase duration="' + max_dur + '" state="GgrrGG"/>\n' \
                          '\t\t<phase duration="3"  state="yyrryy"/>\n' \

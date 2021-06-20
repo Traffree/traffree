@@ -73,7 +73,7 @@ def basic_color_based_scheduler_loop(tl_ids, lane2detector):
                     old_phase = traci.trafficlight.getPhase(tl_id)
                     traci.trafficlight.setPhase(tl_id, old_phase)
                     continue
-                # TODO: change from 'green vs red' to 'given phase vs another phase'
+
                 for idx, link in enumerate(links):
                     link_from = link[0][0]
                     if pattern[idx] == 'R' or pattern[idx] == 'r':

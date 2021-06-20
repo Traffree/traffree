@@ -1,6 +1,6 @@
 <configuration>
     <input>
-        <net-file value="u_rand.net.xml"/>
+        <net-file value="rand.net.xml"/>
         <route-files value="rand.rou.xml"/>
         <additional-files value="rand.add.xml"/>
     </input>
