@@ -65,21 +65,24 @@ def basic_color_based_scheduler_loop(tl_ids, lane2detector):
         if step % 19 == 0:
             for tl_id in tl_ids:
                 red, green = set(), set()
-                # yellow = set()  # we won't need to count yellow links cause there are none of them
+
                 links = traci.trafficlight.getControlledLinks(tl_id)
                 pattern = traci.trafficlight.getRedYellowGreenState(tl_id)
+                duration = traci.trafficlight.getPhaseDuration(tl_id)
+                if duration == 999:  # case of 2 straight roads joining
+                    old_phase = traci.trafficlight.getPhase(tl_id)
+                    traci.trafficlight.setPhase(tl_id, old_phase)
+                    continue
+                # TODO: change from 'green vs red' to 'given phase vs another phase'
                 for idx, link in enumerate(links):
                     link_from = link[0][0]
                     if pattern[idx] == 'R' or pattern[idx] == 'r':
                         red.add(link_from)
                     elif pattern[idx] == 'G' or pattern[idx] == 'g':
                         green.add(link_from)
-                    # elif pattern[idx] == 'Y' or pattern[idx] == 'y':
-                    #     yellow.add(link_from)
 
                 red_stats = get_colored_lane_stats(lane2detector, red)
                 green_stats = get_colored_lane_stats(lane2detector, green)
-                # yellow_stats = get_colored_lane_stats(lane2detector, yellow)
 
                 info = BasicColorBasedSchedulerInfo(tl_id, red_stats, green_stats)
                 prediction = BasicColorBasedScheduler.predict(info)
