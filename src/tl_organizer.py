@@ -1,3 +1,4 @@
+import optparse
 import os
 import sys
 
@@ -51,8 +52,10 @@ def get_new_logic(logic, max_dur='1000'):
 
 
 def main():
+    in_file = sys.argv[1]
+    out_file = sys.argv[2]
 
-    net = open('rand.net.xml', 'r')
+    net = open(in_file, 'r')
     new_xml = ''
     while True:
         line = net.readline()
@@ -71,7 +74,7 @@ def main():
             break
 
     net.close()
-    new_net = open('u_rand.net.xml', 'w')
+    new_net = open(out_file, 'w')
     new_net.write(new_xml)
     new_net.close()
 

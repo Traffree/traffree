@@ -1,9 +1,12 @@
 import optparse
 import os
+import pickle
 import sys
 import re
 
 # we need to import some python modules from the $SUMO_HOME/tools directory
+import neat
+
 if 'SUMO_HOME' in os.environ:
     tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
     sys.path.append(tools)
@@ -12,6 +15,7 @@ else:
 
 from scheduler.basic_random_scheduler import BasicRandomScheduler, BasicRandomSchedulerInfo
 from scheduler.basic_color_based_scheduler import BasicColorBasedScheduler, BasicColorBasedSchedulerInfo
+from scheduler.neat_scheduler import NeatScheduler, NeatSchedulerInfo
 
 from sumolib import checkBinary  # Checks for the binary in environ vars
 import traci
@@ -98,7 +102,6 @@ def basic_color_based_scheduler_loop(tl_ids, lane2detector):
         step += 1
 
 
-# new helper
 def get_colored_lane_stats(lane2detector, lanes):
     detectors = [lane2detector[lane] for lane in lanes]
     detectors = [t for item in detectors for t in item]
@@ -133,12 +136,54 @@ def basic_random_scheduler_loop(tl_ids, lane2detector):
         step += 1
 
 
+def neat_scheduler_loop(tl_ids, lane2detector, net):
+    step = 0
+    scheduler = NeatScheduler(net)
+    while traci.simulation.getMinExpectedNumber() > 0:
+        traci.simulationStep()
+
+        if step % 19 == 0:
+            for tl_id in tl_ids:
+                red, green = set(), set()
+
+                links = traci.trafficlight.getControlledLinks(tl_id)
+                pattern = traci.trafficlight.getRedYellowGreenState(tl_id)
+                duration = traci.trafficlight.getPhaseDuration(tl_id)
+                if duration == 999:  # case of 2 straight roads joining
+                    old_phase = traci.trafficlight.getPhase(tl_id)
+                    traci.trafficlight.setPhase(tl_id, old_phase)
+                    continue
+
+                for idx, link in enumerate(links):
+                    link_from = link[0][0]
+                    if pattern[idx] == 'R' or pattern[idx] == 'r':
+                        red.add(link_from)
+                    elif pattern[idx] == 'G' or pattern[idx] == 'g':
+                        green.add(link_from)
+
+                red_stats = get_colored_lane_stats(lane2detector, red)
+                green_stats = get_colored_lane_stats(lane2detector, green)
+
+                info = NeatSchedulerInfo(tl_id, red_stats, green_stats)
+                prediction = scheduler.predict(info)
+
+                old_phase = traci.trafficlight.getPhase(tl_id)
+                if prediction == 0:
+                    # maintain green
+                    traci.trafficlight.setPhase(tl_id, old_phase)
+                else:
+                    # switch to next phase (which is yellow followed by red)
+                    new_phase = (old_phase + 1) % 4
+                    traci.trafficlight.setPhase(tl_id, new_phase)
+        step += 1
+
+
 def basic_sumo_loop():
     while traci.simulation.getMinExpectedNumber() > 0:
         traci.simulationStep()
 
 
-def run(scheduler_type):
+def run(scheduler_type, net=None, training=False):
     tl_ids = traci.trafficlight.getIDList()
     detector_ids = traci.lanearea.getIDList()
     lane2detector = get_lane_2_detector(detector_ids)
@@ -147,16 +192,19 @@ def run(scheduler_type):
         basic_random_scheduler_loop(tl_ids, lane2detector)
     elif scheduler_type == "BasicColorBasedScheduler":
         basic_color_based_scheduler_loop(tl_ids, lane2detector)
+    elif scheduler_type == "NeatScheduler":
+        neat_scheduler_loop(tl_ids, lane2detector, net)
     else:
         basic_sumo_loop()
 
     traci.close()
     sys.stdout.flush()
 
-    print_statistics(scheduler_type)
+    if not training:
+        print_statistics(scheduler_type)
 
 
-def print_statistics(scheduler_type):
+def get_statistics():
     waiting_time_array = []
     waiting_count_array = []
     stop_time_array = []
@@ -167,6 +215,11 @@ def print_statistics(scheduler_type):
         stop_time_array.append(float(trip_info.stopTime))
         time_loss_array.append(float(trip_info.timeLoss))
 
+    return waiting_time_array, waiting_count_array, stop_time_array, time_loss_array
+
+
+def print_statistics(scheduler_type):
+    waiting_time_array, waiting_count_array, stop_time_array, time_loss_array = get_statistics()
     print("Scheduler Type: ", scheduler_type if scheduler_type is not None else "Default")
     print("Waiting time statistics")
     print("Max: ", max(waiting_time_array))
@@ -197,6 +250,18 @@ def main():
     options, args = get_options()
     config_path = args[0]
     scheduler_type = args[1] if len(args) > 1 else None
+    model_file = args[2] if len(args) > 2 else None
+    neat_config_file = args[3] if len(args) > 3 else 'neat_config.txt'
+
+    net = None
+    if model_file:
+        config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction,
+                                    neat.DefaultSpeciesSet, neat.DefaultStagnation,
+                                    neat_config_file)
+
+        with open(model_file, "rb") as f:
+            genome = pickle.load(f)
+            net = neat.nn.FeedForwardNetwork.create(genome, config)
 
     # check binary
     if options.nogui:
@@ -206,7 +271,7 @@ def main():
 
     # traci starts sumo as a subprocess and then this script connects and runs
     traci.start([sumo_binary, "-c", config_path, "--tripinfo-output", "tripinfo.xml"])
-    run(scheduler_type)
+    run(scheduler_type, net)
 
 
 if __name__ == "__main__":
