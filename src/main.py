@@ -6,6 +6,7 @@ import re
 
 # we need to import some python modules from the $SUMO_HOME/tools directory
 import neat
+from config import *
 
 if 'SUMO_HOME' in os.environ:
     tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
@@ -16,6 +17,7 @@ else:
 from scheduler.basic_random_scheduler import BasicRandomScheduler, BasicRandomSchedulerInfo
 from scheduler.basic_color_based_scheduler import BasicColorBasedScheduler, BasicColorBasedSchedulerInfo
 from scheduler.neat_scheduler import NeatScheduler, NeatSchedulerInfo
+from scheduler.multi_detector_neat_sceduler import MultiDetectorNeatScheduler, MultiDetectorNeatSchedulerInfo
 
 from sumolib import checkBinary  # Checks for the binary in environ vars
 import traci
@@ -178,6 +180,63 @@ def neat_scheduler_loop(tl_ids, lane2detector, net):
         step += 1
 
 
+def multi_detector_neat_scheduler_loop(tl_ids, lane2detector, net):
+    step = 0
+    scheduler = MultiDetectorNeatScheduler(net)
+    while traci.simulation.getMinExpectedNumber() > 0:
+        traci.simulationStep()
+
+        if step % 11 == 0:
+            for tl_id in tl_ids:
+                red, green = set(), set()
+
+                links = traci.trafficlight.getControlledLinks(tl_id)
+                pattern = traci.trafficlight.getRedYellowGreenState(tl_id)
+                duration = traci.trafficlight.getPhaseDuration(tl_id)
+                if duration == 999:  # case of 2 straight roads joining
+                    old_phase = traci.trafficlight.getPhase(tl_id)
+                    traci.trafficlight.setPhase(tl_id, old_phase)
+                    continue
+
+                for idx, link in enumerate(links):
+                    link_from = link[0][0]
+                    if pattern[idx] == 'R' or pattern[idx] == 'r':
+                        red.add(link_from)
+                    elif pattern[idx] == 'G' or pattern[idx] == 'g':
+                        green.add(link_from)
+
+                red_stats = get_multi_detector_lane_stats(lane2detector, red)
+                green_stats = get_multi_detector_lane_stats(lane2detector, green)
+
+                info = MultiDetectorNeatSchedulerInfo(tl_id, red_stats, green_stats)
+
+                prediction = scheduler.predict(info)
+
+                old_phase = traci.trafficlight.getPhase(tl_id)
+                if prediction >= 0:
+                    # maintain green
+                    traci.trafficlight.setPhase(tl_id, old_phase)
+                else:
+                    # switch to next phase (which is yellow followed by red)
+                    new_phase = (old_phase + 1) % 4
+                    traci.trafficlight.setPhase(tl_id, new_phase)
+        step += 1
+
+
+def get_multi_detector_lane_stats(lane2detector, lanes):
+    detectors = [lane2detector[lane] for lane in lanes]
+    detectors = [t for item in detectors for t in item]
+    stats = [[0]*len(speed_thresholds) for _ in range(N_detectors_per_lane)]
+
+    for detector in detectors:
+        jam = traci.lanearea.getJamLengthVehicle(detector)
+        _, idx, speed, _, _ = detector.split('_')
+        speed_idx = speed_thresholds.index(speed)
+        stats[idx][speed_idx] += jam
+
+    return stats
+
+
 def basic_sumo_loop():
     while traci.simulation.getMinExpectedNumber() > 0:
         traci.simulationStep()
@@ -194,6 +253,8 @@ def run(scheduler_type, net=None, training=False):
         basic_color_based_scheduler_loop(tl_ids, lane2detector)
     elif scheduler_type == "NeatScheduler":
         neat_scheduler_loop(tl_ids, lane2detector, net)
+    elif scheduler_type == "MultiDetectorNeatScheduler":
+        multi_detector_neat_scheduler_loop(tl_ids, lane2detector, net)
     else:
         basic_sumo_loop()
 

@@ -25,6 +25,7 @@ import logging
 import os
 import sys
 
+from config import *
 sys.path.append(os.path.join(os.environ["SUMO_HOME"], "tools"))
 import sumolib  # noqa
 
@@ -144,10 +145,6 @@ if __name__ == "__main__":
                 options.requested_distance_to_tls,
                 lane_length)
 
-            # U can modify this constants
-            N_detectors_per_lane = 3
-            speed_thresholds = ["10", "30", "100"]
-
             for i in range(N_detectors_per_lane):
                 for speed in speed_thresholds:
                     detector_xml = detectors_xml.addChild("laneAreaDetector")
@@ -160,7 +157,7 @@ if __name__ == "__main__":
                     detector_xml.setAttribute("friendlyPos", "x")
 
                     # updated line below to uniquely identify each detector
-                    detector_xml.setAttribute("id", "e2det_" + str(i) + "_sp_" + speed + "_" + str(lane_id))
+                    detector_xml.setAttribute("id", "e2det_" + str(i) + "_" + speed + "_" + str(lane_id))
                     detector_xml.setAttribute("lane", str(lane_id))
                     pad = options.requested_distance_to_tls
                     detector_len = final_detector_length / N_detectors_per_lane - pad
