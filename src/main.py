@@ -142,7 +142,7 @@ def neat_scheduler_loop(tl_ids, lane2detector, net):
     while traci.simulation.getMinExpectedNumber() > 0:
         traci.simulationStep()
 
-        if step % 19 == 0:
+        if step % 11 == 0:
             for tl_id in tl_ids:
                 red, green = set(), set()
 
@@ -168,7 +168,7 @@ def neat_scheduler_loop(tl_ids, lane2detector, net):
                 prediction = scheduler.predict(info)
 
                 old_phase = traci.trafficlight.getPhase(tl_id)
-                if prediction == 0:
+                if prediction >= 0:
                     # maintain green
                     traci.trafficlight.setPhase(tl_id, old_phase)
                 else:

@@ -46,7 +46,7 @@ def run(config_file):
     p.add_reporter(stats)
 
     # Run for up to 50 generations.  # TODO: take from command line or from config
-    winner_genome = p.run(eval_genomes, 1)
+    winner_genome = p.run(eval_genomes, 3)
 
     # show final stats
     print('\nBest genome:\n{!s}'.format(winner_genome))
