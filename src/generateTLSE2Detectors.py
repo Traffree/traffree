@@ -82,13 +82,13 @@ if __name__ == "__main__":
                            help="Length of the detector in meters "
                            "(-1 for maximal length).",
                            type=int,
-                           default=250)
+                           default=-1)
     argParser.add_argument("-d", "--distance-to-TLS",
                            dest="requested_distance_to_tls",
                            help="Distance of the detector to the traffic "
                            "light in meters. Defaults to 0.1m.",
                            type=float,
-                           default=.1)
+                           default=0.3)
     argParser.add_argument("-f", "--frequency",
                            dest="frequency",
                            help="Detector's frequency. Defaults to 60.",
@@ -144,18 +144,28 @@ if __name__ == "__main__":
                 options.requested_distance_to_tls,
                 lane_length)
 
-            detector_xml = detectors_xml.addChild("laneAreaDetector")
-            detector_xml.setAttribute("file", options.results)
-            if options.tlCoupled:
-                detector_xml.setAttribute("tl", tls.getID())
-            else:
-                detector_xml.setAttribute("freq", str(options.frequency))
-            detector_xml.setAttribute("speedThreshold", "100")
-            detector_xml.setAttribute("friendlyPos", "x")
-            detector_xml.setAttribute("id", "e2det_" + str(lane_id))
-            detector_xml.setAttribute("lane", str(lane_id))
-            detector_xml.setAttribute("length", str(final_detector_length))
-            detector_xml.setAttribute("pos", str(final_detector_position))
+            # U can modify this constants
+            N_detectors_per_lane = 3
+            speed_thresholds = ["10", "30", "100"]
+
+            for i in range(N_detectors_per_lane):
+                for speed in speed_thresholds:
+                    detector_xml = detectors_xml.addChild("laneAreaDetector")
+                    detector_xml.setAttribute("file", options.results)
+                    if options.tlCoupled:
+                        detector_xml.setAttribute("tl", tls.getID())
+                    else:
+                        detector_xml.setAttribute("freq", str(options.frequency))
+                    detector_xml.setAttribute("speedThreshold", speed)
+                    detector_xml.setAttribute("friendlyPos", "x")
+
+                    # updated line below to uniquely identify each detector
+                    detector_xml.setAttribute("id", "e2det_" + str(i) + "_sp_" + speed + "_" + str(lane_id))
+                    detector_xml.setAttribute("lane", str(lane_id))
+                    pad = options.requested_distance_to_tls
+                    detector_len = final_detector_length / N_detectors_per_lane - pad
+                    detector_xml.setAttribute("length", str(detector_len))
+                    detector_xml.setAttribute("pos", str(final_detector_position - i * (detector_len + pad)))
 
     detector_file = open(options.output, 'w')
     detector_file.write(detectors_xml.toXML())

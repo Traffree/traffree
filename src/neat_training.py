@@ -1,5 +1,6 @@
 import random
 import os
+import statistics
 import sys
 import time
 import neat
@@ -23,7 +24,8 @@ def eval_genomes(genomes, config):
         main.run("NeatScheduler", nets[index], training=True)
 
         waiting_time_array = main.get_statistics()[0]  # TODO: what if we choose other metrics?
-        ge[index].fitness = -sum(waiting_time_array)
+        obj = sum(waiting_time_array) / len(waiting_time_array) + 0.1 * statistics.stdev(waiting_time_array)
+        ge[index].fitness = -obj
         print(ge[index].fitness)
 
 
