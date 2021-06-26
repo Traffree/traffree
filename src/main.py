@@ -232,7 +232,7 @@ def get_multi_detector_lane_stats(lane2detector, lanes):
         jam = traci.lanearea.getJamLengthVehicle(detector)
         _, idx, speed, _, _ = detector.split('_')
         speed_idx = speed_thresholds.index(speed)
-        stats[idx][speed_idx] += jam
+        stats[int(idx)][speed_idx] += jam
 
     return stats
 
