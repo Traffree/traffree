@@ -87,8 +87,8 @@ def basic_color_based_scheduler_loop(tl_ids, lane2detector):
                     elif pattern[idx] == 'G' or pattern[idx] == 'g':
                         green.add(link_from)
 
-                red_stats = get_colored_lane_stats(lane2detector, red)
-                green_stats = get_colored_lane_stats(lane2detector, green)
+                red_stats = sum(map(lambda arr: arr[-1], get_multi_detector_lane_stats(lane2detector, red)))
+                green_stats = sum(map(lambda arr: arr[-1], get_multi_detector_lane_stats(lane2detector, green)))
 
                 info = BasicColorBasedSchedulerInfo(tl_id, red_stats, green_stats)
                 prediction = BasicColorBasedScheduler.predict(info)
@@ -102,13 +102,6 @@ def basic_color_based_scheduler_loop(tl_ids, lane2detector):
                     new_phase = (old_phase + 1) % 4
                     traci.trafficlight.setPhase(tl_id, new_phase)
         step += 1
-
-
-def get_colored_lane_stats(lane2detector, lanes):
-    detectors = [lane2detector[lane] for lane in lanes]
-    detectors = [t for item in detectors for t in item]
-    jams = [traci.lanearea.getJamLengthVehicle(detector) for detector in detectors]
-    return sum(jams)
 
 
 def basic_random_scheduler_loop(tl_ids, lane2detector):
@@ -163,8 +156,8 @@ def neat_scheduler_loop(tl_ids, lane2detector, net):
                     elif pattern[idx] == 'G' or pattern[idx] == 'g':
                         green.add(link_from)
 
-                red_stats = get_colored_lane_stats(lane2detector, red)
-                green_stats = get_colored_lane_stats(lane2detector, green)
+                red_stats = sum(map(lambda arr: arr[-1], get_multi_detector_lane_stats(lane2detector, red)))
+                green_stats = sum(map(lambda arr: arr[-1], get_multi_detector_lane_stats(lane2detector, green)))
 
                 info = NeatSchedulerInfo(tl_id, red_stats, green_stats)
                 prediction = scheduler.predict(info)
