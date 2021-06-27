@@ -20,13 +20,28 @@ def eval_genomes(genomes, config):
         nets.append(net)
 
     for index in range(len(ge)):
-        traci.start([checkBinary('sumo'), "-c", "abstract_networks/grid/grid.sumocfg", "--tripinfo-output", "tripinfo.xml", "-W"])
-        main.run("NeatScheduler", nets[index], training=True)
+        traci.start([checkBinary('sumo'), "-c", sumo_config_file, "--tripinfo-output", "tripinfo.xml", "-W"])
+        main.run(scheduler_type, nets[index], training=True)
 
         waiting_time_array = main.get_statistics()[0]  # TODO: what if we choose other metrics?
         obj = sum(waiting_time_array) / len(waiting_time_array) + 0.1 * statistics.stdev(waiting_time_array)
         ge[index].fitness = -obj
         print(ge[index].fitness)
+
+
+def show_final_stats(winner_genome, config):
+    print('\nBest genome:\n{!s}'.format(winner_genome))
+    winner_net = neat.nn.FeedForwardNetwork.create(winner_genome, config)
+
+    traci.start([checkBinary('sumo'), "-c", sumo_config_file, "--tripinfo-output", "tripinfo.xml", "-W"])
+    main.run(scheduler_type, winner_net)
+
+
+def save_best_model(winner_genome):
+    model_file_name = f'saved_models/neat/{scheduler_type}_{time.strftime("%d.%m.%Y-%H:%M")}.pkl'
+    with open(model_file_name, "wb") as f:
+        pickle.dump(winner_genome, f)
+        f.close()
 
 
 def run(config_file):
@@ -47,25 +62,23 @@ def run(config_file):
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
 
-    # Run for up to 50 generations.  # TODO: take from command line or from config
-    winner_genome = p.run(eval_genomes, 3)
-
-    # show final stats
-    print('\nBest genome:\n{!s}'.format(winner_genome))
-    winner_net = neat.nn.FeedForwardNetwork.create(winner_genome, config)
-    # TODO: take params from command line. generate appropriate winner.pkl name
-    traci.start([checkBinary('sumo'), "-c", "abstract_networks/grid/grid.sumocfg", "--tripinfo-output", "tripinfo.xml", "-W"])
-    main.run("NeatScheduler", winner_net)
-    with open("winner.pkl", "wb") as f:
-        pickle.dump(winner_genome, f)
-        f.close()
+    winner_genome = p.run(eval_genomes, generations_number)
+    show_final_stats(winner_genome, config)
+    save_best_model(winner_genome)
 
 
 if __name__ == '__main__':
+    args = sys.argv[1:]
+
+    scheduler_type = args[0] if len(args) > 0 else 'NeatScheduler'
+    neat_config_file = args[1] if len(args) > 1 else 'configurations/neat/neat_config.txt'
+    sumo_config_file = args[2] if len(args) > 2 else 'abstract_networks/grid/grid.sumocfg'
+    generations_number = int(args[3]) if len(args) > 3 else 3
+
     # Determine path to configuration file. This path manipulation is
     # here so that the script will run successfully regardless of the
     # current working directory.
     local_dir = os.path.dirname(__file__)
-    config_path = os.path.join(local_dir, 'neat_config.txt')
+    config_path = os.path.join(local_dir, neat_config_file)
     run(config_path)
 

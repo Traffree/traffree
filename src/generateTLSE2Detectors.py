@@ -25,7 +25,7 @@ import logging
 import os
 import sys
 
-from config import *
+from configurations.neat.config import *
 sys.path.append(os.path.join(os.environ["SUMO_HOME"], "tools"))
 import sumolib  # noqa
 

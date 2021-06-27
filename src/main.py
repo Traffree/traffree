@@ -6,7 +6,7 @@ import re
 
 # we need to import some python modules from the $SUMO_HOME/tools directory
 import neat
-from config import *
+from configurations.neat.config import *
 
 if 'SUMO_HOME' in os.environ:
     tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
@@ -312,7 +312,7 @@ def main():
     config_path = args[0]
     scheduler_type = args[1] if len(args) > 1 else None
     model_file = args[2] if len(args) > 2 else None
-    neat_config_file = args[3] if len(args) > 3 else 'neat_config.txt'
+    neat_config_file = args[3] if len(args) > 3 else 'configurations/neat/neat_config.txt'
 
     net = None
     if model_file:
