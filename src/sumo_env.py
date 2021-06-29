@@ -9,13 +9,12 @@ class SumoEnv:
     def __init__(self, config_path):
         self.config_path = config_path
         self.start_sumo()
-        self.tl_ids = filter(lambda tl_id: traci.trafficlight.getPhaseDuration(tl_id) != 999,
-                             traci.trafficlight.getIDList())
+        self.tl_ids = list(filter(lambda tl_id: traci.trafficlight.getPhaseDuration(tl_id) != 999, traci.trafficlight.getIDList()))
         detector_ids = traci.lanearea.getIDList()
         self.lane2detector = get_lane_2_detector(detector_ids)
 
     def start_sumo(self):
-        sumo_binary = checkBinary('sumo-gui')
+        sumo_binary = checkBinary('sumo')
         traci.start([sumo_binary, "-c", self.config_path, "--tripinfo-output", "tripinfo.xml"])
 
     def reset(self):
@@ -61,6 +60,6 @@ class SumoEnv:
                 traci.trafficlight.setPhase(tl_id, new_phase)
 
         next_observation = self.get_observation()
-        reward = np.sum(next_observation, axis=1, dtype=float)
+        reward = np.sum(next_observation, axis=1, dtype=float)  # np.float32
         return next_observation, reward, False
 
