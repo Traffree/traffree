@@ -1,7 +1,8 @@
-import numpy
 import numpy as np
 import tensorflow as tf
 from tqdm import tqdm
+from sumo_env import SumoEnv
+import time
 
 n_observations = 2  # 18
 n_actions = 2
@@ -94,46 +95,20 @@ def main():
     learning_rate = 1e-3
     optimizer = tf.keras.optimizers.Adam(learning_rate)
 
-    # smoothed_reward = mdl.util.LossHistory(smoothing_factor=0.9)
-    # plotter = mdl.util.PeriodicPlotter(sec=2, xlabel='Iterations', ylabel='Rewards')
-    # TODO: plot loss. probably with Tensorboard
-    #
-    # if hasattr(tqdm, '_instances'):
-    #     tqdm._instances.clear()  # clear if it exists
+    env = SumoEnv('abstract_networks/grid/grid.sumocfg')
+
     for i_episode in tqdm(range(500)):
-        # plotter.plot(smoothed_reward.get())
-
-        # Restart the environment
-        # observation = env.reset()
-        # TODO: reload sumo world
-        observation = numpy.array([[0, 0], [0, 0]])
-
+        env.reset()
+        observation = env.get_observation()
         memory.clear()
 
         while True:
-            # using our observation, choose an action and take it in the environment
             action = choose_action(tls_model, observation, single=False)
-            next_observation, reward, done = numpy.array([[0, 0], [0, 0]]), numpy.array([1.0, 1.0]), True  # env.step(action)
-            '''
-            done - traci.simulation.getMinExpectedNumber() <= 0
-            reward - sth depended on num cars on lane? something better? use vehicle value retrieval 
-                   - similar to overall objective
-            next_observation - simulate next 11 steps and return given world description
-            '''
-
-            '''
-            maybe for reward ???
-            getAccumulatedWaitingTime(self, vehID)
-            getAccumulatedWaitingTime() -> double
-                The accumulated waiting time of a vehicle collects the vehicle's waiting time
-                over a certain time interval (interval length is set per option '--waiting-time-memory')    
-            '''
-            # add to memory
+            next_observation, reward, done = env.step(action)
             memory.add_to_memory(observation, action, reward)
 
             # is the episode over? did you crash or do so well that you're done?
             if done:
-                # smoothed_reward.append(sum(memory.rewards))  # TODO: append for plotting
 
                 # initiate training - remember we don't know anything about how the
                 #   agent is doing until it has crashed!
@@ -146,10 +121,8 @@ def main():
                 break
 
             observation = next_observation
-
-    # saved_cartpole = mdl.lab3.save_video_of_model(cartpole_model, "CartPole-v0")
-    # mdl.lab3.play_video(saved_cartpole)
-    # TODO: final plotting
+    model_file_name = f'saved_models/DQL/DQL_{time.strftime("%d.%m.%Y-%H:%M")}.h5'
+    tls_model.save(model_file_name)
 
 
 if __name__ == '__main__':
