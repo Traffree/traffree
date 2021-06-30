@@ -14,10 +14,12 @@ if 'SUMO_HOME' in os.environ:
 else:
     sys.exit("please declare environment variable 'SUMO_HOME'")
 
+import tensorflow as tf
 from scheduler.basic_random_scheduler import BasicRandomScheduler, BasicRandomSchedulerInfo
 from scheduler.basic_color_based_scheduler import BasicColorBasedScheduler, BasicColorBasedSchedulerInfo
 from scheduler.neat_scheduler import NeatScheduler, NeatSchedulerInfo
 from scheduler.multi_detector_neat_sceduler import MultiDetectorNeatScheduler, MultiDetectorNeatSchedulerInfo
+from scheduler.DQL_scheduler import DQLScheduler, DQLSchedulerInfo
 
 from sumolib import checkBinary  # Checks for the binary in environ vars
 import traci
@@ -173,6 +175,48 @@ def neat_scheduler_loop(tl_ids, lane2detector, net):
         step += 1
 
 
+def dql_scheduler_loop(tl_ids, lane2detector, net):
+    step = 0
+    scheduler = DQLScheduler(net)
+    while traci.simulation.getMinExpectedNumber() > 0:
+        traci.simulationStep()
+
+        if step % 11 == 0:
+            for tl_id in tl_ids:
+                red, green = set(), set()
+
+                links = traci.trafficlight.getControlledLinks(tl_id)
+                pattern = traci.trafficlight.getRedYellowGreenState(tl_id)
+                duration = traci.trafficlight.getPhaseDuration(tl_id)
+                if duration == 999:  # case of 2 straight roads joining
+                    old_phase = traci.trafficlight.getPhase(tl_id)
+                    traci.trafficlight.setPhase(tl_id, old_phase)
+                    continue
+
+                for idx, link in enumerate(links):
+                    link_from = link[0][0]
+                    if pattern[idx] == 'R' or pattern[idx] == 'r':
+                        red.add(link_from)
+                    elif pattern[idx] == 'G' or pattern[idx] == 'g':
+                        green.add(link_from)
+
+                red_stats = sum(map(lambda arr: arr[-1], get_multi_detector_lane_stats(lane2detector, red)))
+                green_stats = sum(map(lambda arr: arr[-1], get_multi_detector_lane_stats(lane2detector, green)))
+
+                info = DQLSchedulerInfo(tl_id, red_stats, green_stats)
+                prediction = scheduler.predict(info)
+
+                old_phase = traci.trafficlight.getPhase(tl_id)
+                if prediction == 0:
+                    # maintain green
+                    traci.trafficlight.setPhase(tl_id, old_phase)
+                else:
+                    # switch to next phase (which is yellow followed by red)
+                    new_phase = (old_phase + 1) % 4
+                    traci.trafficlight.setPhase(tl_id, new_phase)
+        step += 1
+
+
 def multi_detector_neat_scheduler_loop(tl_ids, lane2detector, net):
     step = 0
     scheduler = MultiDetectorNeatScheduler(net)
@@ -248,6 +292,8 @@ def run(scheduler_type, net=None, training=False):
         neat_scheduler_loop(tl_ids, lane2detector, net)
     elif scheduler_type == "MultiDetectorNeatScheduler":
         multi_detector_neat_scheduler_loop(tl_ids, lane2detector, net)
+    elif scheduler_type == "DQLScheduler":
+        dql_scheduler_loop(tl_ids, lane2detector, net)
     else:
         basic_sumo_loop()
 
@@ -309,13 +355,16 @@ def main():
 
     net = None
     if model_file:
-        config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction,
-                                    neat.DefaultSpeciesSet, neat.DefaultStagnation,
-                                    neat_config_file)
+        if scheduler_type == 'NeatScheduler' or scheduler_type == 'MultiDetectorNeatScheduler':
+            config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction,
+                                        neat.DefaultSpeciesSet, neat.DefaultStagnation,
+                                        neat_config_file)
 
-        with open(model_file, "rb") as f:
-            genome = pickle.load(f)
-            net = neat.nn.FeedForwardNetwork.create(genome, config)
+            with open(model_file, "rb") as f:
+                genome = pickle.load(f)
+                net = neat.nn.FeedForwardNetwork.create(genome, config)
+        elif scheduler_type == 'DQLScheduler':
+            net = tf.keras.models.load_model(model_file)
 
     # check binary
     if options.nogui:

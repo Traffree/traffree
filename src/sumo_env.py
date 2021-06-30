@@ -47,7 +47,9 @@ class SumoEnv:
         for i in range(11):
             traci.simulationStep()
             if traci.simulation.getMinExpectedNumber() <= 0:
-                return None, 1, True
+                finish_reward = 1  # maybe increased reward can speed up process
+                return None, np.array([finish_reward] * len(self.tl_ids)), True
+
 
         for idx, tl_id in enumerate(self.tl_ids):
             old_phase = traci.trafficlight.getPhase(tl_id)
@@ -60,6 +62,6 @@ class SumoEnv:
                 traci.trafficlight.setPhase(tl_id, new_phase)
 
         next_observation = self.get_observation()
-        reward = np.sum(next_observation, axis=1, dtype=float)  # np.float32
+        reward = -np.sum(next_observation, axis=1, dtype=float)  # np.float32
         return next_observation, reward, False
 

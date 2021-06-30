@@ -69,12 +69,12 @@ def discount_rewards(rewards, gamma=0.95):
         # update the total discounted reward
         R = R * gamma + rewards[t]
         discounted_rewards[t] = R
-
     return normalize(discounted_rewards)
 
 
 def compute_loss(logits, actions, rewards):
     neg_logprob = tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=actions)
+    neg_logprob = tf.reshape(neg_logprob, rewards.shape)
     loss = tf.reduce_mean(neg_logprob * rewards)
     return loss
 
@@ -98,6 +98,7 @@ def main():
     env = SumoEnv('abstract_networks/grid/grid.sumocfg')
 
     for i_episode in tqdm(range(500)):
+        print('--------------------- Initializing epoch #', i_episode, '---------------------')
         env.reset()
         observation = env.get_observation()
         memory.clear()
