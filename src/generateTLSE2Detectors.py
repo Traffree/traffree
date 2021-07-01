@@ -11,12 +11,6 @@
 # https://www.gnu.org/licenses/old-licenses/gpl-2.0-standalone.html
 # SPDX-License-Identifier: EPL-2.0 OR GPL-2.0-or-later
 
-# @file    generateTLSE2Detectors.py
-# @author  Daniel Krajzewicz
-# @author  Karol Stosiek
-# @author  Lena Kalleske
-# @author  Michael Behrisch
-# @date    2007-10-25
 
 from __future__ import absolute_import
 from __future__ import print_function
@@ -25,7 +19,7 @@ import logging
 import os
 import sys
 
-from configurations.neat.config import *
+from configurations.config import *
 sys.path.append(os.path.join(os.environ["SUMO_HOME"], "tools"))
 import sumolib  # noqa
 

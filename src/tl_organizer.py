@@ -16,7 +16,8 @@ def update_durations(logic, max_dur):
         new_phase = phase.split('"')
         if 'G' in new_phase[3]:  # or 'g' in new_phase[3]
             new_phase[1] = max_dur
-        # else duration is 3
+        else:
+            new_phase[1] = '3'
         res += '"'.join(new_phase)
     return res
 

@@ -17,7 +17,7 @@ class SumoEnv:
 
     def start_sumo(self):
         sumo_binary = checkBinary('sumo')
-        traci.start([sumo_binary, "-c", self.config_path, "--tripinfo-output", "tripinfo.xml"])
+        traci.start([sumo_binary, "-c", "--waiting-time-memory", "100000", self.config_path, "--tripinfo-output", "tripinfo.xml"])
 
     def reset(self):
         traci.close()
@@ -71,7 +71,6 @@ class SumoEnv:
             if traci.simulation.getMinExpectedNumber() <= 0:
                 finish_reward = 1  # maybe increased reward can speed up process
                 return None, np.array([finish_reward] * len(self.tl_ids)), True
-
 
         for idx, tl_id in enumerate(self.tl_ids):
             old_phase = traci.trafficlight.getPhase(tl_id)

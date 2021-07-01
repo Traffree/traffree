@@ -12,6 +12,7 @@ def create_tls_model():
     model = tf.keras.models.Sequential([
         tf.keras.layers.Dense(units=n_observations, activation='relu'),
         tf.keras.layers.Dense(units=10, activation='relu'),
+        tf.keras.layers.Dense(units=10, activation='relu'),
         tf.keras.layers.Dense(units=n_actions, activation=None)
     ])
     return model
@@ -19,14 +20,13 @@ def create_tls_model():
 
 def choose_action(model, observation, single=True):
     # add batch dimension to the observation if only a single example was provided
-    observation = np.expand_dims(observation, axis=0) if single else observation
-
-    logits = model.predict(observation)
-    action = tf.random.categorical(logits, num_samples=1)
-    action = action.numpy().flatten()
-    action = tf.one_hot(action, n_actions, axis=-1)
-
-    return action[0] if single else action
+    with tf.device(device_name):
+        observation = np.expand_dims(observation, axis=0) if single else observation
+        logits = model.predict(observation)
+        action = tf.random.categorical(logits, num_samples=1)
+        action = action.numpy().flatten()
+        action = tf.one_hot(action, n_actions, axis=-1)
+        return action[0] if single else action
 
 
 class Memory:
@@ -73,19 +73,21 @@ def discount_rewards(rewards, gamma=0.95):
 
 
 def compute_loss(logits, actions, rewards):
-    neg_logprob = tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=actions)
-    neg_logprob = tf.reshape(neg_logprob, rewards.shape)
-    loss = tf.reduce_mean(neg_logprob * rewards)
-    return loss
+    with tf.device(device_name):
+        neg_logprob = tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=actions)
+        neg_logprob = tf.reshape(neg_logprob, rewards.shape)
+        loss = tf.reduce_mean(neg_logprob * rewards)
+        return loss
 
 
 def train_step(model, optimizer, observations, actions, discounted_rewards):
-    with tf.GradientTape() as tape:
-        logits = model(observations)
-        loss = compute_loss(logits, actions, discounted_rewards)
+    with tf.device(device_name):
+        with tf.GradientTape() as tape:
+            logits = model(observations)
+            loss = compute_loss(logits, actions, discounted_rewards)
 
-    grads = tape.gradient(loss, model.trainable_variables)
-    optimizer.apply_gradients(zip(grads, model.trainable_variables))
+        grads = tape.gradient(loss, model.trainable_variables)
+        optimizer.apply_gradients(zip(grads, model.trainable_variables))
 
 
 def main():
@@ -127,4 +129,8 @@ def main():
 
 
 if __name__ == '__main__':
+    device_name = tf.test.gpu_device_name()
+    if device_name != '/device:GPU:0':
+        device_name = '/cpu:0'
+
     main()

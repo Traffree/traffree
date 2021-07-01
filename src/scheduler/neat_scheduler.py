@@ -21,4 +21,4 @@ class NeatScheduler(SchedulerInterface):
         self.net = net
 
     def predict(self, info: NeatSchedulerInfo):
-        return self.net.activate((info.red, info.green))[0]
+        return 0 if self.net.activate((info.red, info.green))[0] >= 0 else 1

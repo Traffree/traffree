@@ -22,4 +22,4 @@ class MultiDetectorNeatScheduler(SchedulerInterface):
 
     def predict(self, info: MultiDetectorNeatSchedulerInfo):
         arr = info.red + info.green
-        return self.net.activate(tuple([x for sub_arr in arr for x in sub_arr]))[0]
+        return 0 if self.net.activate(tuple([x for sub_arr in arr for x in sub_arr]))[0] >= 0 else 1
