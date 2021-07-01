@@ -11,7 +11,7 @@ n_actions = 2
 def create_tls_model():
     model = tf.keras.models.Sequential([
         tf.keras.layers.Dense(units=n_observations, activation='relu'),
-        # tf.keras.layers.Dense(units=n_hidden, activation='relu'),
+        tf.keras.layers.Dense(units=10, activation='relu'),
         tf.keras.layers.Dense(units=n_actions, activation=None)
     ])
     return model

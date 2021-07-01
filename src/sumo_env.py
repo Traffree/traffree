@@ -12,6 +12,8 @@ class SumoEnv:
         self.tl_ids = list(filter(lambda tl_id: traci.trafficlight.getPhaseDuration(tl_id) != 999, traci.trafficlight.getIDList()))
         detector_ids = traci.lanearea.getIDList()
         self.lane2detector = get_lane_2_detector(detector_ids)
+        self.old_wait_times = {}
+        self.car_id_to_tl = {}
 
     def start_sumo(self):
         sumo_binary = checkBinary('sumo')
@@ -24,7 +26,7 @@ class SumoEnv:
 
     def get_observation(self):
         next_observation = []
-        for idx, tl_id in enumerate(self.tl_ids):
+        for tl_id in self.tl_ids:
             red, green = set(), set()
 
             links = traci.trafficlight.getControlledLinks(tl_id)
@@ -42,6 +44,26 @@ class SumoEnv:
             next_observation.append([red_stats, green_stats])
 
         return np.array(next_observation)
+
+    def get_reward(self):
+        reward = []
+        for tl_id in self.tl_ids:
+            controlled_lanes = traci.trafficlight.getControlledLanes(tl_id)
+            car_ids = []
+            for controlled_lane in controlled_lanes:
+                car_ids.extend(traci.lane.getLastStepVehicleIDs(controlled_lane))
+
+            tl_waiting_time = 0
+            for car_id in car_ids:
+                car_waiting_time = traci.vehicle.getAccumulatedWaitingTime(car_id)
+
+                tl_waiting_time += car_waiting_time - self.old_wait_times.get(car_id, 0)
+                if self.car_id_to_tl.get(car_id, 0) != tl_id:
+                    self.old_wait_times[car_id] = car_waiting_time
+                    self.car_id_to_tl[car_id] = tl_id
+            reward.append(-tl_waiting_time)
+
+        return np.array(reward, dtype=float)
 
     def step(self, action):
         for i in range(11):
@@ -62,6 +84,6 @@ class SumoEnv:
                 traci.trafficlight.setPhase(tl_id, new_phase)
 
         next_observation = self.get_observation()
-        reward = -np.sum(next_observation, axis=1, dtype=float)  # np.float32
+        reward = self.get_reward()
         return next_observation, reward, False
 
