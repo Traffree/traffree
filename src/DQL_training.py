@@ -3,6 +3,7 @@ import tensorflow as tf
 from tqdm import tqdm
 from sumo_env import SumoEnv
 import time
+import sys
 
 n_observations = 2  # 18
 n_actions = 2
@@ -90,14 +91,15 @@ def train_step(model, optimizer, observations, actions, discounted_rewards):
         optimizer.apply_gradients(zip(grads, model.trainable_variables))
 
 
-def main():
+def main(args):
+    sumo_config_path = args[0] if len(args) > 0 else 'abstract_networks/grid/u_grid.sumocfg'
     tls_model = create_tls_model()
     memory = Memory()
 
     learning_rate = 1e-3
     optimizer = tf.keras.optimizers.Adam(learning_rate)
 
-    env = SumoEnv('abstract_networks/grid/grid.sumocfg')
+    env = SumoEnv(sumo_config_path)
 
     for i_episode in tqdm(range(500)):
         print('--------------------- Initializing epoch #', i_episode, '---------------------')
@@ -133,4 +135,4 @@ if __name__ == '__main__':
     if device_name != '/device:GPU:0':
         device_name = '/cpu:0'
 
-    main()
+    main(sys.argv[1:])
