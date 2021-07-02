@@ -23,7 +23,7 @@ class SumoEnv:
     def reset(self):
         traci.close()
         sys.stdout.flush()
-        self.start_sumo()
+        # self.start_sumo()
 
     def get_observation(self):
         next_observation = []

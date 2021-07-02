@@ -106,7 +106,8 @@ def main(args):
 
     for i_episode in tqdm(range(500)):
         print('--------------------- Initializing epoch #', i_episode, '---------------------')
-        env.reset()
+        if i_episode > 0:
+            env.start_sumo()
         observation = env.get_observation()
         memory.clear()
 
@@ -130,6 +131,7 @@ def main(args):
 
             observation = next_observation
 
+        env.reset()
         waiting_time_array = get_statistics()[0]
         print("Max: ", max(waiting_time_array))
         print("Avg: ", sum(waiting_time_array) / len(waiting_time_array))
