@@ -20,7 +20,7 @@ class DQLScheduler(SchedulerInterface):
     def predict(self, info: DQLSchedulerInfo):
         observation = np.array([info.red, info.green])
         observation = np.expand_dims(observation, axis=0)
-        logits = self.net.predict(observation)
+        logits = self.net(observation)
         action = tf.random.categorical(logits, num_samples=1)
         action = action.numpy().flatten()[0]
 

@@ -209,7 +209,7 @@ def main():
                 genome = pickle.load(f)
                 net = neat.nn.FeedForwardNetwork.create(genome, config)
         elif scheduler_type == 'DQLScheduler' or scheduler_type == 'MultiDetectorDQLScheduler':
-            net = tf.keras.models.load_model(model_file)
+            net = tf.keras.models.load_model(model_file, compile=False)
 
     # check binary
     if options.nogui:
