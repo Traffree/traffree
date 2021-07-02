@@ -5,11 +5,9 @@ from sumo_env import SumoEnv
 import time
 import sys
 
-n_observations = 2  # 18
 n_actions = 2
 
-
-def create_tls_model():
+def create_tls_model(n_observations=2):
     model = tf.keras.models.Sequential([
         tf.keras.layers.Dense(units=n_observations, activation='relu'),
         tf.keras.layers.Dense(units=10, activation='relu'),
@@ -92,9 +90,12 @@ def train_step(model, optimizer, observations, actions, discounted_rewards):
 
 
 def main(args):
+    # TODO: what if first argument is omitted?
     sumo_config_path = args[0] if len(args) > 0 else 'abstract_networks/grid/u_grid.sumocfg'
     multiple_detectors = (len(args) > 1 and args[1] == '--multiple-detectors')
-    tls_model = create_tls_model()
+
+    n_observations = 18 if multiple_detectors else 2
+    tls_model = create_tls_model(n_observations)
     memory = Memory()
 
     learning_rate = 1e-3
@@ -127,7 +128,12 @@ def main(args):
                 break
 
             observation = next_observation
-    model_file_name = f'saved_models/DQL/DQL_{time.strftime("%d.%m.%Y-%H:%M")}.h5'
+        # TODO: print overall stats (from sumo_helpers/helper.py) to decide how many epochs are necessary
+
+    if multiple_detectors:
+        model_file_name = f'saved_models/DQL/multi_DQL_{time.strftime("%d.%m.%Y-%H:%M")}.h5'
+    else:
+        model_file_name = f'saved_models/DQL/DQL_{time.strftime("%d.%m.%Y-%H:%M")}.h5'
     tls_model.save(model_file_name)
 
 
