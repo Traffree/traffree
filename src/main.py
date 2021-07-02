@@ -172,6 +172,8 @@ def run(scheduler_type, net=None, training=False):
         multi_detector_neat_scheduler_loop(tl_ids, lane2detector, net)
     elif scheduler_type == "DQLScheduler":
         dql_scheduler_loop(tl_ids, lane2detector, net)
+    elif scheduler_type == "MultiDetectorDQLScheduler":
+        multi_detector_dql_scheduler_loop(tl_ids, lane2detector, net)
     else:
         basic_sumo_loop()
 
@@ -206,7 +208,7 @@ def main():
             with open(model_file, "rb") as f:
                 genome = pickle.load(f)
                 net = neat.nn.FeedForwardNetwork.create(genome, config)
-        elif scheduler_type == 'DQLScheduler':
+        elif scheduler_type == 'DQLScheduler' or scheduler_type == 'MultiDetectorDQLScheduler':
             net = tf.keras.models.load_model(model_file)
 
     # check binary
