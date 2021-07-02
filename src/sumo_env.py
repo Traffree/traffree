@@ -6,8 +6,9 @@ from main import get_lane_2_detector, get_multi_detector_lane_stats
 
 
 class SumoEnv:
-    def __init__(self, config_path):
+    def __init__(self, config_path, multiple_detectors):
         self.config_path = config_path
+        self.multiple_detectors = multiple_detectors
         self.start_sumo()
         self.tl_ids = list(filter(lambda tl_id: traci.trafficlight.getPhaseDuration(tl_id) != 999, traci.trafficlight.getIDList()))
         detector_ids = traci.lanearea.getIDList()
@@ -39,9 +40,15 @@ class SumoEnv:
                 elif pattern[idx] == 'G' or pattern[idx] == 'g':
                     green.add(link_from)
 
-            red_stats = sum(map(lambda arr: arr[-1], get_multi_detector_lane_stats(self.lane2detector, red)))
-            green_stats = sum(map(lambda arr: arr[-1], get_multi_detector_lane_stats(self.lane2detector, green)))
-            next_observation.append([red_stats, green_stats])
+            if self.multiple_detectors:
+                red_stats = get_multi_detector_lane_stats(self.lane2detector, red)
+                green_stats = get_multi_detector_lane_stats(self.lane2detector, green)
+                arr = red_stats + green_stats
+                next_observation.append([x for sub_arr in arr for x in sub_arr])
+            else:
+                red_stats = sum(map(lambda arr: arr[-1], get_multi_detector_lane_stats(self.lane2detector, red)))
+                green_stats = sum(map(lambda arr: arr[-1], get_multi_detector_lane_stats(self.lane2detector, green)))
+                next_observation.append([red_stats, green_stats])
 
         return np.array(next_observation)
 

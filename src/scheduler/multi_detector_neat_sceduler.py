@@ -13,7 +13,7 @@ class MultiDetectorNeatSchedulerInfo(SchedulerInfoInterface):
         super(MultiDetectorNeatSchedulerInfo, self).__init__(light_name)
 
     def __str__(self):
-        return f'red: {self.red} {self.green}'
+        return f'{self.red} {self.green}'
 
 
 class MultiDetectorNeatScheduler(SchedulerInterface):

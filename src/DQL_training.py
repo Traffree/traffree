@@ -93,13 +93,14 @@ def train_step(model, optimizer, observations, actions, discounted_rewards):
 
 def main(args):
     sumo_config_path = args[0] if len(args) > 0 else 'abstract_networks/grid/u_grid.sumocfg'
+    multiple_detectors = (len(args) > 1 and args[1] == '--multiple-detectors')
     tls_model = create_tls_model()
     memory = Memory()
 
     learning_rate = 1e-3
     optimizer = tf.keras.optimizers.Adam(learning_rate)
 
-    env = SumoEnv(sumo_config_path)
+    env = SumoEnv(sumo_config_path, multiple_detectors)
 
     for i_episode in tqdm(range(500)):
         print('--------------------- Initializing epoch #', i_episode, '---------------------')

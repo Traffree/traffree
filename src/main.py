@@ -18,6 +18,7 @@ from scheduler.basic_color_based_scheduler import BasicColorBasedScheduler, Basi
 from scheduler.neat_scheduler import NeatScheduler, NeatSchedulerInfo
 from scheduler.multi_detector_neat_sceduler import MultiDetectorNeatScheduler, MultiDetectorNeatSchedulerInfo
 from scheduler.DQL_scheduler import DQLScheduler, DQLSchedulerInfo
+from scheduler.multi_detector_DQL_scheduler import MultiDetectorDQLScheduler, MultiDetectorDQLSchedulerInfo
 
 from sumolib import checkBinary  # Checks for the binary in environ vars
 import traci
@@ -91,6 +92,26 @@ def neat_scheduler_loop(tl_ids, lane2detector, net):
         step += 1
 
 
+def multi_detector_neat_scheduler_loop(tl_ids, lane2detector, net):
+    step = 0
+    scheduler = MultiDetectorNeatScheduler(net)
+    while traci.simulation.getMinExpectedNumber() > 0:
+        traci.simulationStep()
+
+        if step % 11 == 0:
+            for tl_id in tl_ids:
+                red, green, cont = get_red_green_lanes(tl_id)
+                if cont:
+                    continue
+
+                red_stats = get_multi_detector_lane_stats(lane2detector, red)
+                green_stats = get_multi_detector_lane_stats(lane2detector, green)
+                info = MultiDetectorNeatSchedulerInfo(tl_id, red_stats, green_stats)
+                set_tl_phases(scheduler, info, tl_id)
+
+        step += 1
+
+
 def dql_scheduler_loop(tl_ids, lane2detector, net):
     step = 0
     scheduler = DQLScheduler(net)
@@ -111,9 +132,9 @@ def dql_scheduler_loop(tl_ids, lane2detector, net):
         step += 1
 
 
-def multi_detector_neat_scheduler_loop(tl_ids, lane2detector, net):
+def multi_detector_dql_scheduler_loop(tl_ids, lane2detector, net):
     step = 0
-    scheduler = MultiDetectorNeatScheduler(net)
+    scheduler = MultiDetectorDQLScheduler(net)
     while traci.simulation.getMinExpectedNumber() > 0:
         traci.simulationStep()
 
@@ -125,7 +146,7 @@ def multi_detector_neat_scheduler_loop(tl_ids, lane2detector, net):
 
                 red_stats = get_multi_detector_lane_stats(lane2detector, red)
                 green_stats = get_multi_detector_lane_stats(lane2detector, green)
-                info = MultiDetectorNeatSchedulerInfo(tl_id, red_stats, green_stats)
+                info = MultiDetectorDQLSchedulerInfo(tl_id, red_stats, green_stats)
                 set_tl_phases(scheduler, info, tl_id)
 
         step += 1
