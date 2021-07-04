@@ -124,7 +124,7 @@ def main(args):
                 train_step(tls_model, optimizer,
                            observations=np.vstack(memory.observations),
                            actions=memory.actions,
-                           discounted_rewards=discount_rewards(memory.rewards, 0.7))
+                           discounted_rewards=discount_rewards(memory.rewards, 0.95))
 
                 memory.clear()
                 break
