@@ -1,0 +1,27 @@
+name: traffree
+channels:
+  - pytorch
+  - defaults
+  - anaconda
+dependencies:
+  - cudatoolkit=11.0
+  - gensim
+  - h5py
+  - jinja2
+  - matplotlib
+  - networkx
+  - nltk
+  - numba
+  - numpy
+  - pandas
+  - pip
+  - python=3.8
+  - python-louvain
+  - pytorch=1.7
+  - requests
+  - scikit-learn
+  - scipy
+  - torchaudio
+  - torchvision
+  - tqdm
+  - tensorflow
