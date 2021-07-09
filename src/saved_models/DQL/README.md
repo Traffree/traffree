@@ -45,3 +45,11 @@
   + trained on grid
   + reward: waiting time at tl (fixed memory problem)
   + yellow timeout 3s
+  
+- multi_DQL_02.07.2021-21:16.h5
+  + 18 in, 2 out, 2 hidden layers with 10 nodes each
+  + 500 iterations
+  + trained on grid
+  + reward: waiting time at tl (fixed memory problem)
+  + yellow timeout 3s
+  + gamma = 0.7

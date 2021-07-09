@@ -5,6 +5,8 @@ from scheduler.scheduler_interface import SchedulerInfoInterface, SchedulerInter
 from configurations.config import *
 import re
 
+import numpy as np
+
 
 def set_tl_phases(scheduler: SchedulerInterface, info: SchedulerInfoInterface, tl_id):
     prediction = scheduler.predict(info)
@@ -85,6 +87,22 @@ def get_lane_stats(detectors):
 
     return north_count, east_count, south_count, west_count
 
+def get_node_to_index(net):
+    nodes = [node.getID() for node in net.getNodes()]
+    indices = np.argsort(nodes)
+    return {node : index for node, index in zip(nodes, indices)}
+
+def get_edge_index(net):
+    node2idx = get_node_to_index(net)
+
+    edges = net.getEdges()
+    edge_index = []
+    for edge in edges:
+        from_node = edge.getFromNode().getID()
+        to_node = edge.getToNode().getID()
+        edge_index.append([node2idx[from_node], node2idx[to_node]])
+    
+    return np.array(edge_index)
 
 def get_statistics():
     waiting_time_array = []

@@ -4,8 +4,10 @@ from tqdm import tqdm
 from sumo_env import SumoEnv
 import time
 import sys
+from helper import get_statistics
 
 n_actions = 2
+
 
 def create_tls_model(n_observations=2):
     model = tf.keras.models.Sequential([
@@ -90,7 +92,6 @@ def train_step(model, optimizer, observations, actions, discounted_rewards):
 
 
 def main(args):
-    # TODO: what if first argument is omitted?
     sumo_config_path = args[0] if len(args) > 0 else 'abstract_networks/grid/u_grid.sumocfg'
     multiple_detectors = (len(args) > 1 and args[1] == '--multiple-detectors')
 
@@ -105,7 +106,8 @@ def main(args):
 
     for i_episode in tqdm(range(500)):
         print('--------------------- Initializing epoch #', i_episode, '---------------------')
-        env.reset()
+        if i_episode > 0:
+            env.start_sumo()
         observation = env.get_observation()
         memory.clear()
 
@@ -122,13 +124,17 @@ def main(args):
                 train_step(tls_model, optimizer,
                            observations=np.vstack(memory.observations),
                            actions=memory.actions,
-                           discounted_rewards=discount_rewards(memory.rewards))
+                           discounted_rewards=discount_rewards(memory.rewards, 0.95))
 
                 memory.clear()
                 break
 
             observation = next_observation
-        # TODO: print overall stats (from sumo_helpers/helper.py) to decide how many epochs are necessary
+
+        env.reset()
+        waiting_time_array = get_statistics()[0]
+        print("Max: ", max(waiting_time_array))
+        print("Avg: ", sum(waiting_time_array) / len(waiting_time_array))
 
     if multiple_detectors:
         model_file_name = f'saved_models/DQL/multi_DQL_{time.strftime("%d.%m.%Y-%H:%M")}.h5'

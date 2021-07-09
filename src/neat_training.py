@@ -23,7 +23,7 @@ def eval_genomes(genomes, config):
         traci.start([checkBinary('sumo'), "-c", sumo_config_file, "--tripinfo-output", "tripinfo.xml", "-W"])
         main.run(scheduler_type, nets[index], training=True)
 
-        waiting_time_array = main.get_statistics()[0]  # TODO: what if we choose other metrics?
+        waiting_time_array = main.get_statistics()[0]
         obj = sum(waiting_time_array) / len(waiting_time_array) + 0.1 * statistics.stdev(waiting_time_array)
         ge[index].fitness = -obj
         print(ge[index].fitness)

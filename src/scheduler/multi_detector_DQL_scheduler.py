@@ -20,9 +20,8 @@ class MultiDetectorDQLScheduler(SchedulerInterface):
     def predict(self, info: MultiDetectorDQLSchedulerInfo):
         arr = info.red + info.green
         observation = np.array([x for sub_arr in arr for x in sub_arr])
-        # print(observation)
         observation = np.expand_dims(observation, axis=0)
-        logits = self.net.predict(observation)  # TODO: do we need .predict() ?
+        logits = self.net(observation)
         action = tf.random.categorical(logits, num_samples=1)
         action = action.numpy().flatten()[0]
 
