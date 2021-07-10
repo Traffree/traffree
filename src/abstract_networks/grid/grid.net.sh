@@ -3,8 +3,8 @@ netgenerate --grid \
 -t=edge.typ.xml \
 --default.type="two_lane" \
 --no-turnarounds=true \
---grid.x-number=4 \
---grid.y-number=4 \
---grid.y-length=120 \
---grid.x-length=200 \
+--grid.x-number=8 \
+--grid.y-number=10 \
+--grid.y-length=200 \
+--grid.x-length=300 \
 --output-file=grid.net.xml

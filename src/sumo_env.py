@@ -6,19 +6,24 @@ from main import get_lane_2_detector, get_multi_detector_lane_stats
 
 
 class SumoEnv:
-    def __init__(self, config_path, multiple_detectors):
+    def __init__(self, config_path, multiple_detectors, gui=False):
+        self.gui = gui
         self.config_path = config_path
         self.multiple_detectors = multiple_detectors
         self.start_sumo()
-        self.tl_ids = list(filter(lambda tl_id: traci.trafficlight.getPhaseDuration(tl_id) != 999, traci.trafficlight.getIDList()))
+        self.tl_ids = sorted(filter(lambda tl_id: traci.trafficlight.getPhaseDuration(tl_id) != 999, traci.trafficlight.getIDList()))
         detector_ids = traci.lanearea.getIDList()
         self.lane2detector = get_lane_2_detector(detector_ids)
         self.old_wait_times = {}
         self.car_id_to_tl = {}
 
     def start_sumo(self):
-        sumo_binary = checkBinary('sumo')
+        if (self.gui):
+            sumo_binary = checkBinary('sumo-gui')
+        else:
+            sumo_binary = checkBinary('sumo')
         traci.start([sumo_binary, "-c", self.config_path, "--waiting-time-memory", "100000", "--tripinfo-output", "tripinfo.xml"])
+        traci.simulationStep()
 
     def reset(self):
         traci.close()

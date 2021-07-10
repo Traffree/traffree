@@ -66,7 +66,7 @@ def main():
             while True:
                 phase = net.readline()
                 if phase.count('</tlLogic>') > 0:
-                    new_xml += get_new_logic(cur_phases, max_dur='36')
+                    new_xml += get_new_logic(cur_phases)
                     new_xml += phase
                     break
                 cur_phases.append(phase)
