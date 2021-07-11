@@ -1,5 +1,6 @@
 import time
 from datetime import datetime
+import random
 
 # from tensorboardX import SummaryWriter
 import matplotlib.pyplot as plt
@@ -73,6 +74,15 @@ class Memory:
         self.observations.append(new_observation)
         self.actions.append(new_action)
         self.rewards.append(new_reward)
+    
+    def sample(self, k=0.4):
+        l = len(self.observations)
+        sample = random.sample(range(l), int(l * k))
+        sampled_memory = Memory()
+        for i in sample:
+            sampled_memory.add_to_memory(self.observations[i], self.actions[i], self.rewards[i])
+        return sampled_memory
+
 
 
 # Helper function to combine a list of Memory objects into a single Memory.
@@ -147,40 +157,39 @@ def main(args):
         observation = torch.FloatTensor(sumo_env.get_observation())
         memory.clear()
 
+        k = 0
         while True:
             action = choose_action(model, observation, edge_index)
             next_observation, reward, done = sumo_env.step(action)
             memory.add_to_memory(observation, action, reward)
 
-            # is the episode over? did you crash or do so well that you're done?
             if done:
-                # initiate training - remember we don't know anything about how the
-                #   agent is doing until it has crashed!
+                break
+
+            if k % 40 == 0:
+                sampled_memory = memory.sample()
                 train_step(
                     model,
                     optimizer,
-                    observations=memory.observations,
+                    observations=sampled_memory.observations,
                     edge_index=edge_index,
-                    actions=memory.actions,
-                    rewards=memory.rewards,
+                    actions=sampled_memory.actions,
+                    rewards=sampled_memory.rewards,
                 )
-
                 memory.clear()
-                break
-
             observation = torch.FloatTensor(next_observation)
+            k += 1
 
         sumo_env.reset()
         waiting_time_array = get_statistics()[0]
         print("Max: ", max(waiting_time_array))
         print("Avg: ", sum(waiting_time_array) / len(waiting_time_array))
 
-    # if multiple_detectors:
-    #     model_file_name = f'saved_models/GCNN/multi_GCNN_{time.strftime("%d.%m.%Y-%H:%M")}.h5'
-    # else:
-    #     model_file_name = f'saved_models/GCNN/GCNN_{time.strftime("%d.%m.%Y-%H:%M")}.h5'
-    # model.save(model_file_name)
-
+    if multiple_detectors:
+        model_file_name = f'saved_models/GCNN/multi_GCNN_{time.strftime("%d.%m.%Y-%H:%M")}'
+    else:
+        model_file_name = f'saved_models/GCNN/GCNN_{time.strftime("%d.%m.%Y-%H:%M")}'
+    torch.save(model.state_dict(), model_file_name)
 
 if __name__ == "__main__":
     main(["scenarios/small_grid/normal/config.sumocfg", "--multiple-detectors"])
