@@ -69,18 +69,25 @@ class Memory:
         self.observations = []
         self.actions = []
         self.rewards = []
+        self.next_observations = []
 
-    def add_to_memory(self, new_observation, new_action, new_reward):
-        self.observations.append(new_observation)
-        self.actions.append(new_action)
-        self.rewards.append(new_reward)
+    def add_to_memory(self, observation, action, reward, next_observation):
+        self.observations.append(observation)
+        self.actions.append(action)
+        self.rewards.append(reward)
+        self.next_observations.append(next_observation)
     
     def sample(self, k=0.4):
         l = len(self.observations)
         sample = random.sample(range(l), int(l * k))
         sampled_memory = Memory()
         for i in sample:
-            sampled_memory.add_to_memory(self.observations[i], self.actions[i], self.rewards[i])
+            sampled_memory.add_to_memory(
+                self.observations[i],
+                self.actions[i],
+                self.rewards[i],
+                self.next_observations[i]
+            )
         return sampled_memory
 
 
@@ -115,32 +122,37 @@ def compute_loss(actions, rewards, q, q_next, gamma=0.95):
     return loss.sum() / loss.shape[0]
 
 
-def train_step(model, optimizer, observations, edge_index, actions, rewards):
+def train_step(model, optimizer, observations, next_observations, edge_index, actions, rewards):
     for action, reward, observation, next_observation in zip(
-        actions, rewards, observations[:-1], observations[1:]
+        actions, rewards, observations, next_observations
     ):
         q = model(observation, edge_index)
         with torch.no_grad():
             q_next = model(next_observation, edge_index)
         loss = compute_loss(action, reward, q, q_next)
+        # print(loss.item())
         loss.backward()
         optimizer.step()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-
-def main(args):
-    sumo_config_path = (
-        args[0] if len(args) > 0 else "scenarios/medium_grid/normal/config.sumocfg"
-    )
-    multiple_detectors = len(args) > 1 and args[1] == "--multiple-detectors"
-    net_file = "scenarios/small_grid/map.net.xml"
+def train_gnn_model(
+    sumo_config_path="abstract_networks/grid/u_grid.sumocfg",
+    net_file="abstract_networks/grid/u_grid.net.xml",
+    multiple_detectors=True,
+    num_epochs=1,
+    memory_size=30
+):
+    num_features = 18 if multiple_detectors else 2
+    
     net = sumolib.net.readNet(net_file)
     edge_index = torch.LongTensor(get_edge_index(net).T)
 
-    num_features = 18 if multiple_detectors else 2
     model = GNNModel(
-        input_dim=num_features, output_dim=2, num_layers=1, dropout=0.25
+        input_dim=num_features,
+        output_dim=2,
+        num_layers=1,
+        dropout=0.25
     ).to(device)
 
     memory = Memory()
@@ -150,34 +162,41 @@ def main(args):
 
     sumo_env = SumoEnv(sumo_config_path, multiple_detectors)
 
-    for i_episode in tqdm(range(1)):
+    for i_episode in tqdm(range(num_epochs)):
         print(f"--------------------- Initializing epoch #{i_episode}---------------------")
         if i_episode > 0:
             sumo_env.start_sumo()
-        observation = torch.FloatTensor(sumo_env.get_observation())
-        memory.clear()
 
+        memory.clear()
+        prev_observation = torch.FloatTensor(sumo_env.get_observation())
+        prev_action = 0
+        prev_reward = 0
         k = 0
         while True:
-            action = choose_action(model, observation, edge_index)
-            next_observation, reward, done = sumo_env.step(action)
-            memory.add_to_memory(observation, action, reward)
-
+            action = choose_action(model, prev_observation, edge_index)
+            observation, reward, done = sumo_env.step(action)
             if done:
                 break
 
-            if k % 40 == 0:
+            observation = torch.FloatTensor(observation)
+            if k > 0:
+                memory.add_to_memory(prev_observation, prev_action, prev_reward, observation)
+            
+            if k % memory_size == 0:
                 sampled_memory = memory.sample()
                 train_step(
                     model,
                     optimizer,
                     observations=sampled_memory.observations,
+                    next_observations=sampled_memory.next_observations,
                     edge_index=edge_index,
                     actions=sampled_memory.actions,
                     rewards=sampled_memory.rewards,
                 )
                 memory.clear()
-            observation = torch.FloatTensor(next_observation)
+            prev_action = action
+            prev_reward = reward
+            prev_observation = observation
             k += 1
 
         sumo_env.reset()
@@ -186,10 +205,10 @@ def main(args):
         print("Avg: ", sum(waiting_time_array) / len(waiting_time_array))
 
     if multiple_detectors:
-        model_file_name = f'saved_models/GCNN/multi_GCNN_{time.strftime("%d.%m.%Y-%H:%M")}'
+        model_file_name = f'saved_models/GNN/multi_GNN_{time.strftime("%d.%m.%Y-%H:%M")}.pt'
     else:
-        model_file_name = f'saved_models/GCNN/GCNN_{time.strftime("%d.%m.%Y-%H:%M")}'
+        model_file_name = f'saved_models/GNN/GNN_{time.strftime("%d.%m.%Y-%H:%M")}.pt'
     torch.save(model.state_dict(), model_file_name)
 
 if __name__ == "__main__":
-    main(["scenarios/small_grid/normal/config.sumocfg", "--multiple-detectors"])
+    train_gnn_model()

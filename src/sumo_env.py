@@ -1,3 +1,4 @@
+from numpy.lib.function_base import average
 from sumolib import checkBinary  # Checks for the binary in environ vars
 import traci
 import sys
@@ -73,8 +74,8 @@ class SumoEnv:
                 if self.car_id_to_tl.get(car_id, 0) != tl_id:
                     self.old_wait_times[car_id] = car_waiting_time
                     self.car_id_to_tl[car_id] = tl_id
-            reward.append(-tl_waiting_time / len(car_ids))
-
+            reward.append((-tl_waiting_time / len(car_ids)) if car_ids else 0)
+            
         return np.array(reward, dtype=float)
 
     def step(self, action):
