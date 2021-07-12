@@ -115,14 +115,14 @@ def choose_action(model, observation, edge_index, n_actions=2):
 
 
 def compute_loss(actions, rewards, q, q_next, gamma=0.95):
-    rewards = torch.FloatTensor(rewards)
-    actions = actions.float()
     loss = rewards + gamma * torch.min(q_next, dim=1)[0] - (q * actions).sum(dim=1)
     loss = torch.square(loss)
     return loss.sum() / loss.shape[0]
 
 
 def train_step(model, optimizer, observations, next_observations, edge_index, actions, rewards):
+    rewards = torch.FloatTensor(rewards).to(device)
+    actions = torch.stack(actions).to(device)
     for action, reward, observation, next_observation in zip(
         actions, rewards, observations, next_observations
     ):
@@ -140,13 +140,13 @@ def train_gnn_model(
     sumo_config_path="abstract_networks/grid/u_grid.sumocfg",
     net_file="abstract_networks/grid/u_grid.net.xml",
     multiple_detectors=True,
-    num_epochs=1,
+    num_epochs=50,
     memory_size=30
 ):
     num_features = 18 if multiple_detectors else 2
-    
+
     net = sumolib.net.readNet(net_file)
-    edge_index = torch.LongTensor(get_edge_index(net).T)
+    edge_index = torch.LongTensor(get_edge_index(net).T).to(device)
 
     model = GNNModel(
         input_dim=num_features,
@@ -166,20 +166,20 @@ def train_gnn_model(
         print(f"--------------------- Initializing epoch #{i_episode}---------------------")
         if i_episode > 0:
             sumo_env.start_sumo()
-
+        
         memory.clear()
-        prev_observation = torch.FloatTensor(sumo_env.get_observation())
+        prev_observation = torch.FloatTensor(sumo_env.get_observation()).to(device)
         prev_action = 0
         prev_reward = 0
-        k = 0
+        k = 1
         while True:
             action = choose_action(model, prev_observation, edge_index)
             observation, reward, done = sumo_env.step(action)
             if done:
                 break
 
-            observation = torch.FloatTensor(observation)
-            if k > 0:
+            observation = torch.FloatTensor(observation).to(device)
+            if k > 1:
                 memory.add_to_memory(prev_observation, prev_action, prev_reward, observation)
             
             if k % memory_size == 0:
