@@ -233,7 +233,8 @@ def train_gnn_model_offline(
 
     with open(memory_path, "rb") as f:
         memory = pickle.load(f)
-    print(len(memory))
+    print(f"Memory consists of {len(memory)} observations")
+    
     net = sumolib.net.readNet(net_file)
     edge_index = torch.LongTensor(get_edge_index(net).T).to(device)
 
@@ -270,6 +271,5 @@ def train_gnn_model_offline(
 if __name__ == "__main__":
     # train_gnn_model()
     
-    # TODO: memory to tensors
     train_gnn_model_offline(num_epochs=100)        
 

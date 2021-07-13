@@ -23,6 +23,7 @@ from scheduler.multi_detector_DQL_scheduler import MultiDetectorDQLScheduler, Mu
 from sumolib import checkBinary  # Checks for the binary in environ vars
 import traci
 from helper import *
+from configurations import N_TIMESTEPS
 
 
 def basic_random_scheduler_loop(tl_ids, lane2detector):
@@ -30,7 +31,7 @@ def basic_random_scheduler_loop(tl_ids, lane2detector):
     while traci.simulation.getMinExpectedNumber() > 0:
         traci.simulationStep()
 
-        if step % 19 == 0:
+        if step % N_TIMESTEPS == 0:
             for tl_id in tl_ids:
                 lanes = set(traci.trafficlight.getControlledLanes(tl_id))
                 detectors = [lane2detector[lane] for lane in lanes]
@@ -58,7 +59,7 @@ def basic_color_based_scheduler_loop(tl_ids, lane2detector):
     while traci.simulation.getMinExpectedNumber() > 0:
         traci.simulationStep()
 
-        if step % 19 == 0:
+        if step % N_TIMESTEPS == 0:
             for tl_id in tl_ids:
                 red, green, cont = get_red_green_lanes(tl_id)
                 if cont:
@@ -78,7 +79,7 @@ def neat_scheduler_loop(tl_ids, lane2detector, net):
     while traci.simulation.getMinExpectedNumber() > 0:
         traci.simulationStep()
 
-        if step % 11 == 0:
+        if step % N_TIMESTEPS == 0:
             for tl_id in tl_ids:
                 red, green, cont = get_red_green_lanes(tl_id)
                 if cont:
@@ -98,7 +99,7 @@ def multi_detector_neat_scheduler_loop(tl_ids, lane2detector, net):
     while traci.simulation.getMinExpectedNumber() > 0:
         traci.simulationStep()
 
-        if step % 11 == 0:
+        if step % N_TIMESTEPS == 0:
             for tl_id in tl_ids:
                 red, green, cont = get_red_green_lanes(tl_id)
                 if cont:
@@ -118,7 +119,7 @@ def dql_scheduler_loop(tl_ids, lane2detector, net):
     while traci.simulation.getMinExpectedNumber() > 0:
         traci.simulationStep()
 
-        if step % 11 == 0:
+        if step % N_TIMESTEPS == 0:
             for tl_id in tl_ids:
                 red, green, cont = get_red_green_lanes(tl_id)
                 if cont:
@@ -138,7 +139,7 @@ def multi_detector_dql_scheduler_loop(tl_ids, lane2detector, net):
     while traci.simulation.getMinExpectedNumber() > 0:
         traci.simulationStep()
 
-        if step % 11 == 0:
+        if step % N_TIMESTEPS == 0:
             for tl_id in tl_ids:
                 red, green, cont = get_red_green_lanes(tl_id)
                 if cont:

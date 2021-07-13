@@ -47,7 +47,6 @@ def generate_GNN_data(path_to_dir, model_file):
                 break
 
             if valid:
-                # TODO: memory to tensors
                 memory.add_to_memory(prev_observation, prev_action, prev_reward, observation)
             else:
                 valid = True

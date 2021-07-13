@@ -1,8 +1,11 @@
+import sys
+
+import numpy as np
+import traci
 from numpy.lib.function_base import average
 from sumolib import checkBinary  # Checks for the binary in environ vars
-import traci
-import sys
-import numpy as np
+
+from configurations import N_TIMESTEPS
 from main import get_lane_2_detector, get_multi_detector_lane_stats
 
 
@@ -43,7 +46,7 @@ class SumoEnv:
                 link_from = link[0][0]
                 if pattern[idx] == 'R' or pattern[idx] == 'r':
                     red.add(link_from)
-                elif pattern[idx] == 'G' or pattern[idx] == 'g':
+                else:
                     green.add(link_from)
 
             if self.multiple_detectors:
@@ -79,12 +82,6 @@ class SumoEnv:
         return np.array(reward, dtype=float)
 
     def step(self, action):
-        for i in range(11):
-            traci.simulationStep()
-            if traci.simulation.getMinExpectedNumber() <= 0:
-                finish_reward = 1  # maybe increased reward can speed up process
-                return None, np.array([finish_reward] * len(self.tl_ids)), True
-
         for idx, tl_id in enumerate(self.tl_ids):
             old_phase = traci.trafficlight.getPhase(tl_id)
             if action[idx][1] == 0:
@@ -94,6 +91,12 @@ class SumoEnv:
                 # switch to next phase (which is yellow followed by red)
                 new_phase = (old_phase + 1) % 4
                 traci.trafficlight.setPhase(tl_id, new_phase)
+        
+        for i in range(N_TIMESTEPS):
+            traci.simulationStep()
+            if traci.simulation.getMinExpectedNumber() <= 0:
+                finish_reward = 1  # maybe increased reward can speed up process
+                return None, np.array([finish_reward] * len(self.tl_ids)), True
 
         next_observation = self.get_observation()
         reward = self.get_reward()
