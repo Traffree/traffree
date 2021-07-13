@@ -16,7 +16,7 @@ from sumo_env import SumoEnv
 def generate_GNN_data(path_to_dir, model_file):
     configs = []
     for file in os.listdir(path_to_dir):
-        if 'u_config' in file:
+        if '.sumocfg' in file:
             configs.append(f'{path_to_dir}/{file}')
 
     memory = Memory()
@@ -61,7 +61,7 @@ def generate_GNN_data(path_to_dir, model_file):
         print("Max: ", max(waiting_time_array))
         print("Avg: ", sum(waiting_time_array) / len(waiting_time_array))
 
-    memory_file_name = f'scenarios/medium_grid/training/memory_1.pkl'
+    memory_file_name = f'scenarios/medium_grid/training/memory.pkl'
     with open(memory_file_name, "wb") as f:
         pickle.dump(memory, f)
         f.close()

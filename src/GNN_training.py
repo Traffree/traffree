@@ -226,8 +226,8 @@ def train_gnn_model_offline(
         net_file="scenarios/medium_grid/u_map.net.xml",
         multiple_detectors=True,
         num_epochs=50,
-        memory_path='scenarios/medium_grid/training/memory_13.07.2021-17:11.pkl',
-        k=30,
+        memory_path='scenarios/medium_grid/training/memory.pkl',
+        k=50,
 ):
     num_features = 18
 
@@ -269,5 +269,7 @@ def train_gnn_model_offline(
 
 if __name__ == "__main__":
     # train_gnn_model()
-    train_gnn_model_offline()        # TODO: memory to tensors
+    
+    # TODO: memory to tensors
+    train_gnn_model_offline(num_epochs=100)        
 
