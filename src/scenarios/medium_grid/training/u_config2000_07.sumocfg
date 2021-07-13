@@ -1,0 +1,7 @@
+<configuration>
+    <input>
+        <net-file value="../u_map.net.xml"/>
+        <route-files value="map2000_07.rou.xml"/>
+        <additional-files value="../map.add.xml"/>
+    </input>
+</configuration>
