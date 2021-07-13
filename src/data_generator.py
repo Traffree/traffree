@@ -47,6 +47,7 @@ def generate_GNN_data(path_to_dir, model_file):
                 break
 
             if valid:
+                # TODO: memory to tensors
                 memory.add_to_memory(prev_observation, prev_action, prev_reward, observation)
             else:
                 valid = True
@@ -60,7 +61,7 @@ def generate_GNN_data(path_to_dir, model_file):
         print("Max: ", max(waiting_time_array))
         print("Avg: ", sum(waiting_time_array) / len(waiting_time_array))
 
-    memory_file_name = f'scenarios/medium_grid/training/memory_{time.strftime("%d.%m.%Y-%H:%M")}.pkl'
+    memory_file_name = f'scenarios/medium_grid/training/memory_1.pkl'
     with open(memory_file_name, "wb") as f:
         pickle.dump(memory, f)
         f.close()
@@ -68,8 +69,3 @@ def generate_GNN_data(path_to_dir, model_file):
 
 if __name__ == "__main__":
     generate_GNN_data('scenarios/medium_grid/training', 'saved_models/DQL/multi_DQL_02.07.2021-16:04.h5')
-
-    # memory_file = 'scenarios/medium_grid/training/memory_13.07.2021-17:11.pkl'
-    # with open(memory_file, "rb") as f:
-    #     memory = pickle.load(f)
-    #     print(memory.observations)

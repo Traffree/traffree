@@ -1,3 +1,4 @@
+import pickle
 import time
 from datetime import datetime
 import random
@@ -65,6 +66,9 @@ class Memory:
     def __init__(self):
         self.clear()
 
+    def __len__(self):
+        return len(self.rewards)
+
     def clear(self):
         self.observations = []
         self.actions = []
@@ -121,8 +125,11 @@ def compute_loss(actions, rewards, q, q_next, gamma=0.95):
 
 
 def train_step(model, optimizer, observations, next_observations, edge_index, actions, rewards):
+    observations = torch.FloatTensor(observations).to(device)
+    next_observations = torch.FloatTensor(next_observations).to(device)
     rewards = torch.FloatTensor(rewards).to(device)
     actions = torch.stack(actions).to(device)
+    total_loss = 0
     for action, reward, observation, next_observation in zip(
         actions, rewards, observations, next_observations
     ):
@@ -130,11 +137,15 @@ def train_step(model, optimizer, observations, next_observations, edge_index, ac
         with torch.no_grad():
             q_next = model(next_observation, edge_index)
         loss = compute_loss(action, reward, q, q_next)
-        # print(loss.item())
+        total_loss += loss.item()
         loss.backward()
         optimizer.step()
 
+    print('CURRENT LOSS:', total_loss)
+
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
 def train_gnn_model(
     sumo_config_path="abstract_networks/grid/u_grid.sumocfg",
@@ -210,5 +221,53 @@ def train_gnn_model(
         model_file_name = f'saved_models/GNN/GNN_{time.strftime("%d.%m.%Y-%H:%M")}.pt'
     torch.save(model.state_dict(), model_file_name)
 
+
+def train_gnn_model_offline(
+        net_file="scenarios/medium_grid/u_map.net.xml",
+        multiple_detectors=True,
+        num_epochs=50,
+        memory_path='scenarios/medium_grid/training/memory_13.07.2021-17:11.pkl',
+        k=30,
+):
+    num_features = 18
+
+    with open(memory_path, "rb") as f:
+        memory = pickle.load(f)
+    print(len(memory))
+    net = sumolib.net.readNet(net_file)
+    edge_index = torch.LongTensor(get_edge_index(net).T).to(device)
+
+    model = GNNModel(
+        input_dim=num_features,
+        output_dim=2,
+        num_layers=1,
+        dropout=0.25
+    ).to(device)
+
+    learning_rate = 1e-3
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+
+    for i_episode in tqdm(range(num_epochs)):
+        print(f"--------------------- Initializing epoch #{i_episode}---------------------")
+        sampled_memory = memory.sample(k / len(memory))
+        train_step(
+            model,
+            optimizer,
+            observations=sampled_memory.observations,
+            next_observations=sampled_memory.next_observations,
+            edge_index=edge_index,
+            actions=sampled_memory.actions,
+            rewards=sampled_memory.rewards,
+        )
+
+    if multiple_detectors:
+        model_file_name = f'saved_models/GNN/multi_GNN_offline_{time.strftime("%d.%m.%Y-%H:%M")}.pt'
+    else:
+        model_file_name = f'saved_models/GNN/GNN_offline_{time.strftime("%d.%m.%Y-%H:%M")}.pt'
+    torch.save(model.state_dict(), model_file_name)
+
+
 if __name__ == "__main__":
-    train_gnn_model()
+    # train_gnn_model()
+    train_gnn_model_offline()        # TODO: memory to tensors
+
