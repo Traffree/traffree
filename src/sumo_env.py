@@ -15,7 +15,7 @@ class SumoEnv:
         self.config_path = config_path
         self.multiple_detectors = multiple_detectors
         self.start_sumo()
-        self.tl_ids = sorted(filter(lambda tl_id: traci.trafficlight.getPhaseDuration(tl_id) != 999, traci.trafficlight.getIDList()))
+        self.tl_ids = sorted(traci.trafficlight.getIDList())
         detector_ids = traci.lanearea.getIDList()
         self.lane2detector = get_lane_2_detector(detector_ids)
         self.old_wait_times = {}
@@ -32,7 +32,6 @@ class SumoEnv:
     def reset(self):
         traci.close()
         sys.stdout.flush()
-        # self.start_sumo()
 
     def get_observation(self):
         next_observation = []
@@ -83,6 +82,9 @@ class SumoEnv:
 
     def step(self, action):
         for idx, tl_id in enumerate(self.tl_ids):
+            if traci.trafficlight.getPhaseDuration(tl_id) == 999:
+                continue
+
             old_phase = traci.trafficlight.getPhase(tl_id)
             if action[idx][1] == 0:
                 # maintain green

@@ -24,7 +24,7 @@ def generate_GNN_data(path_to_dir, model_file):
 
     for config in tqdm(configs):
         scenario_name = config.split('/')[-1]
-        print(f"--------------------- Simulating scenario: {scenario_name}---------------------")
+        print(f"--------------------- Simulating scenario: {scenario_name} ---------------------")
 
         sumo_env = SumoEnv(config, multiple_detectors=True)
 

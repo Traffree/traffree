@@ -3,11 +3,12 @@ import os
 import pickle
 
 from tensorflow.keras import models
-from GNN_training import GNNModel
+from GNN_training import GNNModel, choose_action
 import sys
 
 # we need to import some python modules from the $SUMO_HOME/tools directory
 import neat
+from sumo_env import SumoEnv
 
 if 'SUMO_HOME' in os.environ:
     tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
@@ -157,41 +158,23 @@ def multi_detector_dql_scheduler_loop(tl_ids, lane2detector, net):
 
         step += 1
 
-def multi_detector_gnn_scheduler_loop(tl_ids, lane2detector, model, net_file):
+
+def multi_detector_gnn_scheduler_loop(sumo_config_path, model, net_file, gui):
     net = sumolib.net.readNet(net_file)
     edge_index = torch.LongTensor(get_edge_index(net).T)
 
-    step = 0
-    scheduler = MultiDetectorGNNScheduler(model, edge_index)
-    while traci.simulation.getMinExpectedNumber() > 0:
-        traci.simulationStep()
+    sumo_env = SumoEnv(sumo_config_path, multiple_detectors=True, gui=gui)
+    observation = sumo_env.get_observation()
 
-        observations = []
-        if step % N_TIMESTEPS == 0:
-            for tl_id in tl_ids:
-                red, green, cont = get_red_green_lanes(tl_id)
-                if cont:
-                    continue
-                red_stats = get_multi_detector_lane_stats(lane2detector, red)
-                green_stats = get_multi_detector_lane_stats(lane2detector, green)
+    while True:
+        observation = torch.FloatTensor(observation)
+        action = choose_action(model, observation, edge_index)
+        observation, _, done = sumo_env.step(action)
+        if done:
+            break
 
-                arr = red_stats + green_stats
-                observations.append([x for sub_arr in arr for x in sub_arr])
-            
-            observations = torch.Tensor(observations)
-            info = MultiDetectorGNNSchedulerInfo(tl_id, observations)
-            predictions = scheduler.predict(info)
-            for prediction in predictions:
-                old_phase = traci.trafficlight.getPhase(tl_id)
-                if prediction == 0:
-                    # maintain green
-                    traci.trafficlight.setPhase(tl_id, old_phase)
-                else:
-                    # switch to next phase (which is yellow followed by red)
-                    new_phase = (old_phase + 1) % 4
-                    traci.trafficlight.setPhase(tl_id, new_phase)
-
-        step += 1
+    sumo_env.reset()
+    print_statistics("MultiDetectorGNNScheduler")
 
 
 def basic_sumo_loop():
@@ -199,7 +182,8 @@ def basic_sumo_loop():
         traci.simulationStep()
 
 
-def run(scheduler_type, net=None, training=False, net_file=None):
+def run(sumo_binary, config_path, scheduler_type, net=None, training=False):
+    traci.start([sumo_binary, "-c", config_path, "--tripinfo-output", "tripinfo.xml"])
     tl_ids = traci.trafficlight.getIDList()
     detector_ids = traci.lanearea.getIDList()
     lane2detector = get_lane_2_detector(detector_ids)
@@ -216,8 +200,6 @@ def run(scheduler_type, net=None, training=False, net_file=None):
         dql_scheduler_loop(tl_ids, lane2detector, net)
     elif scheduler_type == "MultiDetectorDQLScheduler":
         multi_detector_dql_scheduler_loop(tl_ids, lane2detector, net)
-    elif scheduler_type == "MultiDetectorGNNScheduler":
-        multi_detector_gnn_scheduler_loop(tl_ids, lane2detector, net, net_file)
     else:
         basic_sumo_loop()
 
@@ -234,7 +216,6 @@ def get_options():
     options, args = opt_parser.parse_args()
     return options, args
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def main():
     options, args = get_options()
@@ -272,9 +253,12 @@ def main():
         sumo_binary = checkBinary('sumo-gui')
 
     # traci starts sumo as a subprocess and then this script connects and runs
-    traci.start([sumo_binary, "-c", config_path, "--tripinfo-output", "tripinfo.xml"])
-    run(scheduler_type, net, net_file=config_file)
+    if scheduler_type == "MultiDetectorGNNScheduler":
+        multi_detector_gnn_scheduler_loop(config_path, net, config_file, not options.nogui)
+    else:
+        run(sumo_binary, config_path, scheduler_type, net)
 
 
 if __name__ == "__main__":
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     main()

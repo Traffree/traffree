@@ -144,8 +144,6 @@ def train_step(model, optimizer, observations, next_observations, edge_index, ac
     print('CURRENT LOSS:', total_loss)
 
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 def train_gnn_model(
     sumo_config_path="abstract_networks/grid/u_grid.sumocfg",
     net_file="abstract_networks/grid/u_grid.net.xml",
@@ -268,7 +266,8 @@ def train_gnn_model_offline(
 
 
 if __name__ == "__main__":
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # train_gnn_model()
     
-    train_gnn_model_offline(num_epochs=100)        
+    train_gnn_model_offline(num_epochs=100)
 

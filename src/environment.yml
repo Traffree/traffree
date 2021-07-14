@@ -14,7 +14,6 @@ dependencies:
   - numba
   - numpy
   - pandas
-  - pickle5
   - pip
   - python=3.8
   - python-louvain
