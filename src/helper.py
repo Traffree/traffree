@@ -1,11 +1,13 @@
-import traci
-import sumolib
-
-from scheduler.scheduler_interface import SchedulerInfoInterface, SchedulerInterface
-from configurations.config import *
 import re
 
 import numpy as np
+import sumolib
+import torch
+import torch.nn.functional as F
+import traci
+
+from configurations.config import *
+from scheduler.scheduler_interface import SchedulerInfoInterface, SchedulerInterface
 
 
 def set_tl_phases(scheduler: SchedulerInterface, info: SchedulerInfoInterface, tl_id):
@@ -87,10 +89,12 @@ def get_lane_stats(detectors):
 
     return north_count, east_count, south_count, west_count
 
+
 def get_node_to_index(net):
     nodes = [node.getID() for node in net.getNodes()]
     indices = np.argsort(nodes)
     return {node : index for node, index in zip(nodes, indices)}
+
 
 def get_edge_index(net):
     node2idx = get_node_to_index(net)
@@ -104,22 +108,38 @@ def get_edge_index(net):
     
     return np.array(edge_index)
 
+
+def choose_action(model, observation, edge_index, n_actions=2):
+    # add batch dimension to the observation if only a single example was provided
+    with torch.no_grad():
+        logits = model(observation, edge_index)
+        action = torch.multinomial(logits, num_samples=1)
+        action = action.flatten()
+        action = F.one_hot(action, n_actions)
+        return action
+
+
 def get_statistics():
     waiting_time_array = []
     waiting_count_array = []
     stop_time_array = []
     time_loss_array = []
+    duration_array = []
+    arrival_array = []
     for trip_info in sumolib.xml.parse('tripinfo.xml', ['tripinfo']):
         waiting_time_array.append(float(trip_info.waitingTime))
         waiting_count_array.append(float(trip_info.waitingCount))
         stop_time_array.append(float(trip_info.stopTime))
         time_loss_array.append(float(trip_info.timeLoss))
+        duration_array.append(float(trip_info.duration))
+        arrival_array.append(float(trip_info.arrival))
 
-    return waiting_time_array, waiting_count_array, stop_time_array, time_loss_array
+    waiting_time_pct = [100 * waiting / total for waiting, total in zip(waiting_time_array, duration_array)]
+    return waiting_time_array, waiting_count_array, stop_time_array, time_loss_array, waiting_time_pct, arrival_array[-1]
 
 
 def print_statistics(scheduler_type):
-    waiting_time_array, waiting_count_array, stop_time_array, time_loss_array = get_statistics()
+    waiting_time_array, waiting_count_array, stop_time_array, time_loss_array, waiting_time_pct, last_arrival = get_statistics()
     print("Scheduler Type: ", scheduler_type if scheduler_type is not None else "Default")
     print("Waiting time statistics")
     print("Max: ", max(waiting_time_array))
@@ -140,4 +160,12 @@ def print_statistics(scheduler_type):
     print("Max: ", max(time_loss_array))
     print("Min: ", min(time_loss_array))
     print("Avg: ", sum(time_loss_array) / len(time_loss_array))
+
+    print("Waiting time percentage statistics")
+    print("Max: ", max(waiting_time_pct))
+    print("Min: ", min(waiting_time_pct))
+    print("Avg: ", sum(waiting_time_pct) / len(waiting_time_pct))
+
+    print("---------------------")
+    print("Simulation duration: ", last_arrival)
     print("\n")

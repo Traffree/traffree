@@ -1,65 +1,19 @@
 import pickle
-import time
-from datetime import datetime
 import random
+import time
 
 # from tensorboardX import SummaryWriter
-import matplotlib.pyplot as plt
-import numpy as np
 import sumolib
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-import torch_geometric.nn as pyg_nn
-import torch_geometric.transforms as T
-import torch_geometric.utils as pyg_utils
-import traci
 from tqdm import tqdm
 
-from helper import get_edge_index, get_node_to_index, get_statistics
+from helper import get_edge_index, get_statistics
+from main import multi_detector_gnn_scheduler_loop
 from sumo_env import SumoEnv
-
-
-class GNNModel(nn.Module):
-    def __init__(self, input_dim, output_dim, num_layers, hidden_dim=32, dropout=0.25):
-        super(GNNModel, self).__init__()
-
-        # dim = [num_tls, num_features]
-        self.dropout = dropout
-        self.num_layers = num_layers
-        self.convs = nn.ModuleList()
-        self.convs.append(self.build_conv_model(input_dim, hidden_dim))
-        self.lns = nn.ModuleList()
-        for _ in range(num_layers - 1):
-            self.lns.append(nn.LayerNorm(hidden_dim))
-            self.convs.append(self.build_conv_model(hidden_dim, hidden_dim))
-
-        # dim = [num_tls, hidden_dim]
-        # post-message-passing
-        self.post_mp = nn.Sequential(
-            nn.Linear(hidden_dim, hidden_dim // 2),
-            nn.Dropout(self.dropout),
-            nn.ReLU(),
-            nn.Linear(hidden_dim // 2, output_dim),
-        )
-
-    def build_conv_model(self, input_dim, hidden_dim):
-        # refer to pytorch geometric nn module for different implementation of GNNs.
-        return pyg_nn.GCNConv(input_dim, hidden_dim)
-
-    def forward(self, x, edge_index):
-        for i in range(self.num_layers):
-            x = self.convs[i](x, edge_index)  # [num_tls, hidden_dim]
-            emb = x
-            x = F.relu(x)
-            x = F.dropout(x, p=self.dropout, training=self.training)
-            if not i == self.num_layers - 1:
-                x = self.lns[i](x)
-
-        x = self.post_mp(x)
-
-        return F.softmax(x, dim=1)
+from models.GNN_model import GNNModel
+from helper import choose_action
 
 
 class Memory:
@@ -106,16 +60,6 @@ def aggregate_memories(memories):
             batch_memory.add_to_memory(*step)
 
     return batch_memory
-
-
-def choose_action(model, observation, edge_index, n_actions=2):
-    # add batch dimension to the observation if only a single example was provided
-    with torch.no_grad():
-        logits = model(observation, edge_index)
-        action = torch.multinomial(logits, num_samples=1)
-        action = action.flatten()
-        action = F.one_hot(action, n_actions)
-        return action
 
 
 def compute_loss(actions, rewards, q, q_next, gamma=0.95):
@@ -171,7 +115,7 @@ def train_gnn_model(
     sumo_env = SumoEnv(sumo_config_path, multiple_detectors)
 
     for i_episode in tqdm(range(num_epochs)):
-        print(f"--------------------- Initializing epoch #{i_episode}---------------------")
+        print(f"--------------------- Initializing epoch #{i_episode} ---------------------")
         if i_episode > 0:
             sumo_env.start_sumo()
         
@@ -225,6 +169,8 @@ def train_gnn_model_offline(
         num_epochs=50,
         memory_path='scenarios/medium_grid/training/memory.pkl',
         k=50,
+        validation_path='scenarios/medium_grid/light/u_config.sumocfg',
+        validation_freq=1000
 ):
     num_features = 18
 
@@ -246,7 +192,7 @@ def train_gnn_model_offline(
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
     for i_episode in tqdm(range(num_epochs)):
-        print(f"--------------------- Initializing epoch #{i_episode}---------------------")
+        print(f"--------------------- Initializing epoch #{i_episode} ---------------------")
         sampled_memory = memory.sample(k / len(memory))
         train_step(
             model,
@@ -257,6 +203,10 @@ def train_gnn_model_offline(
             actions=sampled_memory.actions,
             rewards=sampled_memory.rewards,
         )
+
+        if (i_episode + 1) % validation_freq == 0:
+            print(f"--------------------- Validation on epoch #{i_episode} ---------------------")
+            multi_detector_gnn_scheduler_loop(validation_path, model, net_file)
 
     if multiple_detectors:
         model_file_name = f'saved_models/GNN/multi_GNN_offline_{time.strftime("%d.%m.%Y-%H:%M")}.pt'
@@ -269,5 +219,5 @@ if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # train_gnn_model()
     
-    train_gnn_model_offline(num_epochs=100)
+    train_gnn_model_offline(num_epochs=5000)
 

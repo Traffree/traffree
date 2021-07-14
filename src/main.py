@@ -3,7 +3,8 @@ import os
 import pickle
 
 from tensorflow.keras import models
-from GNN_training import GNNModel, choose_action
+from helper import choose_action
+from models.GNN_model import GNNModel
 import sys
 
 # we need to import some python modules from the $SUMO_HOME/tools directory
@@ -23,7 +24,6 @@ from scheduler.neat_scheduler import NeatScheduler, NeatSchedulerInfo
 from scheduler.multi_detector_neat_sceduler import MultiDetectorNeatScheduler, MultiDetectorNeatSchedulerInfo
 from scheduler.DQL_scheduler import DQLScheduler, DQLSchedulerInfo
 from scheduler.multi_detector_DQL_scheduler import MultiDetectorDQLScheduler, MultiDetectorDQLSchedulerInfo
-from scheduler.multi_detector_GNN_scheduler import MultiDetectorGNNScheduler, MultiDetectorGNNSchedulerInfo
 
 from sumolib import checkBinary  # Checks for the binary in environ vars
 import traci
@@ -159,7 +159,7 @@ def multi_detector_dql_scheduler_loop(tl_ids, lane2detector, net):
         step += 1
 
 
-def multi_detector_gnn_scheduler_loop(sumo_config_path, model, net_file, gui):
+def multi_detector_gnn_scheduler_loop(sumo_config_path, model, net_file, gui=False):
     net = sumolib.net.readNet(net_file)
     edge_index = torch.LongTensor(get_edge_index(net).T)
 
