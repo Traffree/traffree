@@ -6,7 +6,7 @@ from numpy.lib.function_base import average
 from sumolib import checkBinary  # Checks for the binary in environ vars
 
 from configurations import N_TIMESTEPS
-from main import get_lane_2_detector, get_multi_detector_lane_stats
+from helper import get_lane_2_detector, get_multi_detector_lane_stats
 
 
 class SumoEnv:

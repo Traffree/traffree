@@ -146,7 +146,6 @@ def train_step(model, optimizer, observations, next_observations, edge_index, ac
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-
 def train_gnn_model(
     sumo_config_path="abstract_networks/grid/u_grid.sumocfg",
     net_file="abstract_networks/grid/u_grid.net.xml",

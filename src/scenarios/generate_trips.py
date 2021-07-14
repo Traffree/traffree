@@ -3,7 +3,7 @@ import sys
 import os
 
 
-def generate_trips(path, duration=2000, period_min=1, period_max=5, variants=15):
+def generate_trips(path, duration=2000, period_min=1, period_max=5, variants=20):
 
     for period in range(period_min, period_max):
         period_str = f"0.{period}"

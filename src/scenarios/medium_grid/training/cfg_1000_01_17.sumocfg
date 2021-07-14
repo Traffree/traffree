@@ -1,0 +1,9 @@
+
+                    <configuration>
+                        <input>
+                            <net-file value="../u_map.net.xml"/>
+                            <route-files value="route_1000_01_17.rou.xml"/>
+                            <additional-files value="../map.add.xml"/>
+                        </input>
+                    </configuration>
+                
