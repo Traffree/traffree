@@ -52,7 +52,7 @@ def basic_random_scheduler_loop(tl_ids, lane2detector):
                 if old_phase % 2:  # already yellow
                     traci.trafficlight.setPhase(tl_id, 2 * prediction)
                 elif old_phase == 2 * prediction:  # color remains unchanged
-                    traci.trafficlight.setPhase(tl_id, 2*prediction)
+                    traci.trafficlight.setPhase(tl_id, 2 * prediction)
                 else:  # assign yellow
                     yellow_phase = (2 * prediction + 3) % 4
                     traci.trafficlight.setPhase(tl_id, yellow_phase)
@@ -159,15 +159,18 @@ def multi_detector_dql_scheduler_loop(tl_ids, lane2detector, net):
         step += 1
 
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+
 def multi_detector_gnn_scheduler_loop(sumo_config_path, model, net_file, gui=False):
     net = sumolib.net.readNet(net_file)
-    edge_index = torch.LongTensor(get_edge_index(net).T)
+    edge_index = torch.LongTensor(get_edge_index(net).T).to(device)
 
     sumo_env = SumoEnv(sumo_config_path, multiple_detectors=True, gui=gui)
     observation = sumo_env.get_observation()
 
     while True:
-        observation = torch.FloatTensor(observation)
+        observation = torch.FloatTensor(observation).to(device)
         action = choose_action(model, observation, edge_index)
         observation, _, done = sumo_env.step(action)
         if done:
@@ -245,7 +248,7 @@ def main():
             ).to(device)
             net.load_state_dict(torch.load(model_file, map_location=device))
             net.eval()
-            
+
     # check binary
     if options.nogui:
         sumo_binary = checkBinary('sumo')

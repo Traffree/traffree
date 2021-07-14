@@ -47,7 +47,7 @@ def get_red_green_lanes(tl_id):
 def get_multi_detector_lane_stats(lane2detector, lanes):
     detectors = [lane2detector[lane] for lane in lanes]
     detectors = [t for item in detectors for t in item]
-    stats = [[0]*len(speed_thresholds) for _ in range(N_detectors_per_lane)]
+    stats = [[0] * len(speed_thresholds) for _ in range(N_detectors_per_lane)]
 
     for detector in detectors:
         jam = traci.lanearea.getJamLengthVehicle(detector)
@@ -93,7 +93,7 @@ def get_lane_stats(detectors):
 def get_node_to_index(net):
     nodes = [node.getID() for node in net.getNodes()]
     indices = np.argsort(nodes)
-    return {node : index for node, index in zip(nodes, indices)}
+    return {node: index for node, index in zip(nodes, indices)}
 
 
 def get_edge_index(net):
@@ -105,15 +105,15 @@ def get_edge_index(net):
         from_node = edge.getFromNode().getID()
         to_node = edge.getToNode().getID()
         edge_index.append([node2idx[from_node], node2idx[to_node]])
-    
+
     return np.array(edge_index)
 
 
 def choose_action(model, observation, edge_index, n_actions=2):
     # add batch dimension to the observation if only a single example was provided
     with torch.no_grad():
-        logits = model(observation, edge_index)
-        action = torch.multinomial(logits, num_samples=1)
+        q_values = model(observation, edge_index)
+        action = torch.argmax(q_values, dim=1)
         action = action.flatten()
         action = F.one_hot(action, n_actions)
         return action

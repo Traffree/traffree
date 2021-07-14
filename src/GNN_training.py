@@ -34,7 +34,7 @@ class Memory:
         self.actions.append(action)
         self.rewards.append(reward)
         self.next_observations.append(next_observation)
-    
+
     def sample(self, k=0.4):
         l = len(self.observations)
         sample = random.sample(range(l), int(l * k))
@@ -63,7 +63,7 @@ def aggregate_memories(memories):
 
 
 def compute_loss(actions, rewards, q, q_next, gamma=0.95):
-    loss = rewards + gamma * torch.min(q_next, dim=1)[0] - (q * actions).sum(dim=1)
+    loss = rewards + gamma * torch.max(q_next, dim=1)[0] - (q * actions).sum(dim=1)
     loss = torch.square(loss)
     return loss.sum() / loss.shape[0]
 
@@ -77,6 +77,7 @@ def train_step(model, optimizer, observations, next_observations, edge_index, ac
     for action, reward, observation, next_observation in zip(
         actions, rewards, observations, next_observations
     ):
+        optimizer.zero_grad()
         q = model(observation, edge_index)
         with torch.no_grad():
             q_next = model(next_observation, edge_index)
@@ -104,7 +105,7 @@ def train_gnn_model(
         input_dim=num_features,
         output_dim=2,
         num_layers=1,
-        dropout=0.25
+        dropout=0.05
     ).to(device)
 
     memory = Memory()
@@ -118,7 +119,7 @@ def train_gnn_model(
         print(f"--------------------- Initializing epoch #{i_episode} ---------------------")
         if i_episode > 0:
             sumo_env.start_sumo()
-        
+
         memory.clear()
         prev_observation = torch.FloatTensor(sumo_env.get_observation()).to(device)
         prev_action = 0
@@ -133,7 +134,7 @@ def train_gnn_model(
             observation = torch.FloatTensor(observation).to(device)
             if k > 1:
                 memory.add_to_memory(prev_observation, prev_action, prev_reward, observation)
-            
+
             if k % memory_size == 0:
                 sampled_memory = memory.sample()
                 train_step(
@@ -163,6 +164,9 @@ def train_gnn_model(
     torch.save(model.state_dict(), model_file_name)
 
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
 def train_gnn_model_offline(
         net_file="scenarios/medium_grid/u_map.net.xml",
         multiple_detectors=True,
@@ -177,7 +181,7 @@ def train_gnn_model_offline(
     with open(memory_path, "rb") as f:
         memory = pickle.load(f)
     print(f"Memory consists of {len(memory)} observations")
-    
+
     net = sumolib.net.readNet(net_file)
     edge_index = torch.LongTensor(get_edge_index(net).T).to(device)
 
@@ -185,7 +189,7 @@ def train_gnn_model_offline(
         input_dim=num_features,
         output_dim=2,
         num_layers=1,
-        dropout=0.25
+        dropout=0.05
     ).to(device)
 
     learning_rate = 1e-3
@@ -206,7 +210,10 @@ def train_gnn_model_offline(
 
         if (i_episode + 1) % validation_freq == 0:
             print(f"--------------------- Validation on epoch #{i_episode} ---------------------")
-            multi_detector_gnn_scheduler_loop(validation_path, model, net_file)
+            model.eval()
+            with torch.no_grad():
+                multi_detector_gnn_scheduler_loop(validation_path, model, net_file)
+            model.train()
 
     if multiple_detectors:
         model_file_name = f'saved_models/GNN/multi_GNN_offline_{time.strftime("%d.%m.%Y-%H:%M")}.pt'
@@ -218,6 +225,6 @@ def train_gnn_model_offline(
 if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # train_gnn_model()
-    
-    train_gnn_model_offline(num_epochs=5000)
+
+    train_gnn_model_offline(num_epochs=2000)
 
