@@ -35,10 +35,18 @@ def get_new_logic(logic, max_dur='1000', yellow_dur="6", dumb_dur="999"):
                      '\t\t<phase duration="' + max_dur + '" state="rrGGrr"/>\n' \
                      '\t\t<phase duration="' + yellow_dur + '" state="rryyyr"/>\n'
     elif len(logic) == 3:
-        new_phases = '\t\t<phase duration="' + dumb_dur + '" state="GG"/>\n' \
-                     '\t\t<phase duration="' + yellow_dur + '" state="yy"/>\n' \
-                     '\t\t<phase duration="' + dumb_dur + '" state="GG"/>\n' \
-                     '\t\t<phase duration="' + yellow_dur + '" state="yy"/>\n'
+        first_phase = logic[0]
+        first_phase_pattern = first_phase.split('"')[3]
+        if len(first_phase_pattern) == 4:
+            new_phases = '\t\t<phase duration="' + dumb_dur + '" state="GGGG"/>\n' \
+                         '\t\t<phase duration="' + yellow_dur + '" state="yyyy"/>\n' \
+                         '\t\t<phase duration="' + dumb_dur + '" state="GGGG"/>\n' \
+                         '\t\t<phase duration="' + yellow_dur + '" state="yyyy"/>\n'
+        else:
+            new_phases = '\t\t<phase duration="' + dumb_dur + '" state="GG"/>\n' \
+                         '\t\t<phase duration="' + yellow_dur + '" state="yy"/>\n' \
+                         '\t\t<phase duration="' + dumb_dur + '" state="GG"/>\n' \
+                         '\t\t<phase duration="' + yellow_dur + '" state="yy"/>\n'
     elif len(logic) == 4:
         first_phase = logic[0]
         first_phase_pattern = first_phase.split('"')[3]

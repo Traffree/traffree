@@ -3,13 +3,13 @@ import sys
 import os
 
 
-def generate_trips(path, duration=2000, period_min=1, period_max=5, variants=20):
+def generate_trips(path, duration=2000, period_min=2, period_max=6, variants=20):
 
     for period in range(period_min, period_max):
         period_str = f"0.{period}"
 
         for i in range(variants):
-            route_duration = duration if period > 2 else duration // 2
+            route_duration = duration if period > 3 else duration // 2
             route_tag = f"{route_duration}_{period_str.replace('.', '')}_{i}"
             subprocess.run([
                 "python3", 

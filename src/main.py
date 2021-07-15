@@ -244,7 +244,7 @@ def main():
                 input_dim=18,
                 output_dim=2,
                 num_layers=1,
-                dropout=0.25
+                dropout=0.05
             ).to(device)
             net.load_state_dict(torch.load(model_file, map_location=device))
             net.eval()

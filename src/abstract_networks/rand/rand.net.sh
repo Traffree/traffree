@@ -1,11 +1,11 @@
 netgenerate --rand \
 -j=traffic_light \
--t=../edge.typ.xml \
+-t=edge.typ.xml \
 --default.type="two_lane" \
 --no-turnarounds=true \
 --rand.max-distance=1000 \
 --rand.min-distance=200 \
---rand.min-angle=45 \
+--rand.min-angle=60 \
 --rand.iterations=200 \
 --rand.neighbor-dist1=0 \
 --rand.neighbor-dist2=0 \
@@ -14,4 +14,7 @@ netgenerate --rand \
 --rand.neighbor-dist5=0 \
 --rand.neighbor-dist6=0 \
 --rand.grid=true \
---output-file=rand.net.xml
+--rand.connectivity=0.99 \
+--rand.num-tries=150 \
+--output-file=rand.net.xml \
+--random

@@ -1,7 +1,7 @@
 <configuration>
     <input>
-        <net-file value="../u_rand.net.xml"/>
-        <route-files value="rand.rou.xml"/>
-        <additional-files value="../rand.add.xml"/>
+        <net-file value="../u_map.net.xml"/>
+        <route-files value="map.rou.xml"/>
+        <additional-files value="../map.add.xml"/>
     </input>
 </configuration>
