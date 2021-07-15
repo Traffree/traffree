@@ -48,7 +48,7 @@ def get_new_logic(logic, max_dur='1000', yellow_dur="6", dumb_dur="999"):
             new_phases = '\t\t<phase duration="' + max_dur + '" state="GgrrGG"/>\n' \
                          '\t\t<phase duration="' + yellow_dur + '" state="yyrryy"/>\n' \
                          '\t\t<phase duration="' + max_dur + '" state="rrGGrr"/>\n' \
-                         '\t\t<phase duration="' + yellow_dur + '" tate="rryyyr"/>\n'
+                         '\t\t<phase duration="' + yellow_dur + '" state="rryyyr"/>\n'
     return new_phases
 
 
