@@ -77,5 +77,26 @@ def generate_GNN_data(path_to_dir, model_file):
         f.close()
 
 
+def merge(path1='scenarios/medium_rand/training/memory_random_neat.pkl',
+          path2='scenarios/medium_rand/training/memory_random_color_based.pkl',
+          path_out='scenarios/medium_rand/training/memory_combined.pkl'):
+    with open(path1, "rb") as f1:
+        memory1 = pickle.load(f1)
+        f1.close()
+
+    with open(path2, "rb") as f2:
+        memory2 = pickle.load(f2)
+        f2.close()
+
+    memory1.observations.extend(memory2.observations)
+    memory1.next_observations.extend(memory2.next_observations)
+    memory1.actions.extend(memory2.actions)
+    memory1.rewards.extend(memory2.rewards)
+
+    with open(path_out, "wb") as f:
+        pickle.dump(memory1, f)
+        f.close()
+
+
 if __name__ == "__main__":
     generate_GNN_data('scenarios/medium_grid/training', 'saved_models/DQL/multi_DQL_02.07.2021-16:04.h5')

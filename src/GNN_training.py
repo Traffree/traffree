@@ -87,6 +87,7 @@ def train_step(model, optimizer, observations, next_observations, edge_index, ac
         optimizer.step()
 
     print('CURRENT LOSS:', total_loss)
+    return total_loss
 
 
 def train_gnn_model(
@@ -194,11 +195,11 @@ def train_gnn_model_offline(
 
     learning_rate = 1e-3
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-
+    loss_history = []
     for i_episode in tqdm(range(num_epochs)):
         print(f"--------------------- Initializing epoch #{i_episode} ---------------------")
         sampled_memory = memory.sample(k / len(memory))
-        train_step(
+        loss = train_step(
             model,
             optimizer,
             observations=sampled_memory.observations,
@@ -207,7 +208,7 @@ def train_gnn_model_offline(
             actions=sampled_memory.actions,
             rewards=sampled_memory.rewards,
         )
-
+        loss_history.append(loss)
         if (i_episode + 1) % validation_freq == 0:
             print(f"--------------------- Validation on epoch #{i_episode} ---------------------")
             model.eval()
@@ -220,6 +221,7 @@ def train_gnn_model_offline(
     else:
         model_file_name = f'saved_models/GNN/GNN_offline_{time.strftime("%d.%m.%Y-%H:%M")}.pt'
     torch.save(model.state_dict(), model_file_name)
+    return loss_history
 
 
 if __name__ == "__main__":
