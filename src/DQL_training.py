@@ -1,10 +1,12 @@
+import sys
+import time
+
 import numpy as np
 import tensorflow as tf
 from tqdm import tqdm
-from sumo_env import SumoEnv
-import time
-import sys
+
 from helper import get_statistics
+from sumo_env import SumoEnv
 
 n_actions = 2
 
@@ -43,18 +45,6 @@ class Memory:
         self.observations.append(new_observation)
         self.actions.append(new_action)
         self.rewards.append(new_reward)
-
-
-# Helper function to combine a list of Memory objects into a single Memory.
-#     This will be very useful for batching.
-def aggregate_memories(memories):
-    batch_memory = Memory()
-
-    for memory in memories:
-        for step in zip(memory.observations, memory.actions, memory.rewards):
-            batch_memory.add_to_memory(*step)
-
-    return batch_memory
 
 
 def normalize(x):

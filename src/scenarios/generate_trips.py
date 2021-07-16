@@ -37,5 +37,6 @@ def generate_trips(path, duration=2000, period_min=2, period_max=6, variants=20)
         if '.alt.' in file_name:
             os.remove(f"{path}/training/{file_name}")
 
+
 if __name__ == "__main__":
     generate_trips(sys.argv[1])

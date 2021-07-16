@@ -1,13 +1,14 @@
-import random
 import os
+import pickle
 import statistics
 import sys
 import time
+
 import neat
-import pickle
-import main
-from sumolib import checkBinary  # Checks for the binary in environ vars
 import traci
+from sumolib import checkBinary  # Checks for the binary in environ vars
+
+import main
 
 
 def eval_genomes(genomes, config):

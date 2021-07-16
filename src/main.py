@@ -1,14 +1,12 @@
 import optparse
 import os
 import pickle
-
-from tensorflow.keras import models
-from helper import choose_action
-from models.GNN_model import GNNModel
 import sys
 
 # we need to import some python modules from the $SUMO_HOME/tools directory
 import neat
+
+from models.GNN_model import GNNModel
 from sumo_env import SumoEnv
 
 if 'SUMO_HOME' in os.environ:

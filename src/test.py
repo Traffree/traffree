@@ -1,7 +1,8 @@
-from models.GNN_model import GNNModel
-import torch
-from helper import get_edge_index, choose_action
 import sumolib
+import torch
+
+from helper import get_edge_index, choose_action
+from models.GNN_model import GNNModel
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

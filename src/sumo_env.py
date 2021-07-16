@@ -2,7 +2,6 @@ import sys
 
 import numpy as np
 import traci
-from numpy.lib.function_base import average
 from sumolib import checkBinary  # Checks for the binary in environ vars
 
 from configurations import N_TIMESTEPS

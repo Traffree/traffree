@@ -1,9 +1,4 @@
-import pickle
-
-import neat
-
 from .scheduler_interface import SchedulerInterface, SchedulerInfoInterface
-import numpy as np
 
 
 class NeatSchedulerInfo(SchedulerInfoInterface):

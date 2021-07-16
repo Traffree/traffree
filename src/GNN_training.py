@@ -2,18 +2,16 @@ import pickle
 import random
 import time
 
-# from tensorboardX import SummaryWriter
 import sumolib
 import torch
-import torch.nn.functional as F
 import torch.optim as optim
 from tqdm import tqdm
 
+from helper import choose_action
 from helper import get_edge_index, get_statistics
 from main import multi_detector_gnn_scheduler_loop
-from sumo_env import SumoEnv
 from models.GNN_model import GNNModel
-from helper import choose_action
+from sumo_env import SumoEnv
 
 
 class Memory:
@@ -47,19 +45,6 @@ class Memory:
                 self.next_observations[i]
             )
         return sampled_memory
-
-
-
-# Helper function to combine a list of Memory objects into a single Memory.
-#     This will be very useful for batching.
-def aggregate_memories(memories):
-    batch_memory = Memory()
-
-    for memory in memories:
-        for step in zip(memory.observations, memory.actions, memory.rewards):
-            batch_memory.add_to_memory(*step)
-
-    return batch_memory
 
 
 def compute_loss(actions, rewards, q, q_next, gamma=0.95):
