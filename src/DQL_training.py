@@ -54,6 +54,7 @@ def normalize(x):
 
 
 def discount_rewards(rewards, gamma=0.95):
+    rewards -= np.mean(rewards, axis=0)
     discounted_rewards = np.zeros_like(rewards)
     R = 0
     for t in reversed(range(0, len(rewards))):
@@ -79,6 +80,7 @@ def train_step(model, optimizer, observations, actions, discounted_rewards):
 
         grads = tape.gradient(loss, model.trainable_variables)
         optimizer.apply_gradients(zip(grads, model.trainable_variables))
+        return loss
 
 
 def main(args):
@@ -93,6 +95,7 @@ def main(args):
     optimizer = tf.keras.optimizers.Adam(learning_rate)
 
     env = SumoEnv(sumo_config_path, multiple_detectors)
+    loss_history = []
 
     for i_episode in tqdm(range(500)):
         print('--------------------- Initializing epoch #', i_episode, '---------------------')
@@ -111,11 +114,11 @@ def main(args):
 
                 # initiate training - remember we don't know anything about how the
                 #   agent is doing until it has crashed!
-                train_step(tls_model, optimizer,
+                loss = train_step(tls_model, optimizer,
                            observations=np.vstack(memory.observations),
                            actions=memory.actions,
                            discounted_rewards=discount_rewards(memory.rewards, 0.95))
-
+                loss_history.append(loss)
                 memory.clear()
                 break
 
@@ -131,6 +134,7 @@ def main(args):
     else:
         model_file_name = f'saved_models/DQL/DQL_{time.strftime("%d.%m.%Y-%H:%M")}.h5'
     tls_model.save(model_file_name)
+    return loss_history
 
 
 if __name__ == '__main__':
