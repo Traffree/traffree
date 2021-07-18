@@ -19,7 +19,7 @@ As the investigated area is currently under active research and only a limited n
 
 Installation is pretty straightforward, you just need to have conda and pull this project on your computer. 
 
-Run this scripts to create and activate virtual environment: 
+Run these scripts to create and activate virtual environment: 
 ```
 ./bin/create-env.sh
 ```
@@ -28,6 +28,26 @@ conda activate ./env
 ```
 
 That's it, you can successfully run this project.
+
+## Map Types
+
+### Manhattan grid
+
+![alt text](images/manhattan1.png) ![alt text](images/manhattan2.png)
+
+### Random grid
+
+![alt text](images/random1.png) ![alt text](images/random2.png)
+
+## Results
+
+### Manhattan grid
+
+![alt text](images/stats_manhattan1.png) ![alt text](images/stats_manhattan2.png)
+
+### Random grid
+
+![alt text](images/stats_random1.png) ![alt text](images/stats_random2.png)
 
 ## License
 
