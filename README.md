@@ -2,11 +2,7 @@
 
 Traffree aims to control traffic in order to reduce the waiting time for vehicles. Traffic jams remain a major problem in the daily lives of most people. With varying estimates, an average citizen wastes around 60-100 hours each year due to heavy traffic resulting in lost potential income, not saying anything about the extra damage we deal to the environment that makes the existing ecological situation even more worrying.
 
-We as citizens of a large city have to deal with congestion on daily bases, yet hardly have imagined taking any effective steps for resolving the issue. The problem is usually addressed with new infrastructure projects, such as building new and fixing existing roadways, organising public transport, etc.
-
 As it turns out suboptimal traffic signal controlling is one of the main reasons to blame, that’s why recently this problem became quite popular in machine learning applications. Standard traffic lights operate with alteration of predetermined phases that obviously can not deal with dynamic traffic flows throughout the day resulting in congestion in times when it could have been avoided in case of optimal control.
-
-As students that are interested in machine learning and artificial intelligence, we regularly check out the recent findings in this field. After evaluating our knowledge and experience we decided to compare several modern approaches to solving the problem within the context of our bachelor’s project.
 
 As a result we set a goal to create and compare traffic signalling models that would outperform standard performance in a simulated environment that closely resembled a real-life environment, resulting in reduced mean waiting time for vehicles.
 
