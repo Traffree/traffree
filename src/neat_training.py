@@ -21,8 +21,7 @@ def eval_genomes(genomes, config):
         nets.append(net)
 
     for index in range(len(ge)):
-        traci.start([checkBinary('sumo'), "-c", sumo_config_file, "--tripinfo-output", "tripinfo.xml", "-W"])
-        main.run(scheduler_type, nets[index], training=True)
+        main.run(checkBinary('sumo'), sumo_config_file, scheduler_type, nets[index], training=True)
 
         waiting_time_array = main.get_statistics()[0]
         obj = sum(waiting_time_array) / len(waiting_time_array) + 0.1 * statistics.stdev(waiting_time_array)
@@ -34,8 +33,7 @@ def show_final_stats(winner_genome, config):
     print('\nBest genome:\n{!s}'.format(winner_genome))
     winner_net = neat.nn.FeedForwardNetwork.create(winner_genome, config)
 
-    traci.start([checkBinary('sumo'), "-c", sumo_config_file, "--tripinfo-output", "tripinfo.xml", "-W"])
-    main.run(scheduler_type, winner_net)
+    main.run(checkBinary('sumo'), sumo_config_file, scheduler_type, winner_net)
 
 
 def save_best_model(winner_genome):
