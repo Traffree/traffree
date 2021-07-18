@@ -10,7 +10,7 @@ We considered two approaches:
 * traffic lights that can evaluate traffic condition only on connected roads and act accordingly;
 * global model that gives us ability to observe the situation in the entire traffic network and decide what actions to take on each intersection.
 
-For each approach we have experimented with models of different types and architectures out of which each one of them successfully outperformed standard traffic lights on test scenarios. Some of them significantly improved the average waiting time metric (mainly the models trained with evolutionary algorithm), yet there were some cases that fell short of our expectations. With the final results we were able to reduce the mean waiting time by 20%.
+For each approach we have experimented with models of different types and architectures out of which each one successfully outperformed standard traffic lights on test scenarios. Some of them significantly improved the average waiting time metric (mainly the models trained with evolutionary algorithm), yet there were some cases that fell short of our expectations. With the final results, on average we were able to reduce the mean waiting time by 50% compared to standard traffic lights and by 35% for the best statistical model.
 
 As the investigated area is currently under active research and only a limited number of scientific papers were applicable for our problem statement, thus we had to conduct large amounts of experiments and analyse the observed results. We think that our work is quite valuable and meaningful and coming from the importance of the topic, Traffree has a huge potential and plenty of areas for improvement.
 
